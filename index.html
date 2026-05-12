@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AdminFacile</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="hero">
+  <h1>AdminFacile</h1>
+  <p>
+    L’assistant administratif intelligent pour étudiants et jeunes actifs.
+  </p>
+</header>
+
+  <main class="container">
+    <h1>AdminFacile</h1>
+    <p>Génère une lettre administrative simplement.</p>
+
+    <label>Type de lettre</label>
+    <select id="typeLettre">
+        <option value="resiliation">Résiliation</option>
+        <option value="caf">Réclamation CAF</option>
+        <option value="delai">Demande de délai de paiement</option>
+        <option value="logement">Demande de logement</option>
+        <option value="apl">Demande d’APL</option>
+        <option value="stage">Demande de stage</option>
+        <option value="emploi">Candidature à un emploi</option>
+</select>
+
+    <label>Ton nom complet</label>
+    <input id="nom" type="text" placeholder="Ex : Josseran Yole" />
+
+    <label>Destinataire</label>
+    <input id="destinataire" type="text" placeholder="Ex : CAF, propriétaire..." />
+
+    <label>Objet de la demande</label>
+    <textarea id="objet" placeholder="Explique brièvement ta demande"></textarea>
+
+    <button id="btnGenerer" onclick="genererLettre()">
+  Générer ma lettre
+</button>
+
+    <section id="resultat" class="resultat"></section>
+
+<div class="actions">
+  <button onclick="copierLettre()">Copier la lettre</button>
+  <button onclick="telechargerLettre()">Télécharger la lettre</button>
+</div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
