@@ -19,7 +19,7 @@ async function genererLettre() {
 
     resultat.innerText = "L’IA rédige votre lettre...";
 
-    const reponse = await fetch("http://localhost:3000/generer-lettre", {
+    const reponse = await fetch("https://adminfacile.onrender.com/generer-lettre", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
