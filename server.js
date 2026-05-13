@@ -3,9 +3,20 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const OpenAI = require("openai");
+const admin = require("firebase-admin");
 
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  }),
+});
+
+const firestore = admin.firestore();
 
 const app = express();
 const client = new OpenAI({
@@ -52,13 +63,13 @@ app.post("/create-checkout-session", async (req, res) => {
 
       line_items: [
         {
-          price: "price_1TWZNEK48wyEctXeUVPHLAqw",
+          price: "price_1TWjZLGg20bixEhmm8TvQTTd",
           quantity: 1,
         },
       ],
 
-      success_url: "http://127.0.0.1:5500/success.html",
-      cancel_url: "http://127.0.0.1:5500/index.html",
+    success_url: "https://venerable-pixie-e9c9a9.netlify.app/success.html",
+    cancel_url: "https://venerable-pixie-e9c9a9.netlify.app/index.html",
     });
 
     res.json({ url: session.url });
