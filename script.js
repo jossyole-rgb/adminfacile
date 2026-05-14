@@ -20,6 +20,7 @@ import {
 let utilisateurConnecte = null;
 let utilisateurPremium = false;
 
+
 /* =========================
    NOTIFICATIONS
 ========================= */
@@ -27,8 +28,9 @@ let utilisateurPremium = false;
 function afficherNotification(message) {
   const notification = document.getElementById("notification");
 
-  notification.innerText = message;
+  if (!notification) return;
 
+  notification.innerText = message;
   notification.classList.add("show");
 
   setTimeout(() => {
@@ -46,7 +48,6 @@ onAuthStateChanged(auth, async (user) => {
 
   if (user) {
     await verifierPremium(user.email);
-    afficherNotification("Connexion détectée.");
   }
 
   mettreAJourDashboard();
@@ -76,6 +77,7 @@ window.genererLettre = async function () {
   if (!nom || !destinataire || !objet) {
     resultat.innerText =
       "Veuillez remplir tous les champs avant de générer la lettre.";
+
     afficherNotification("Veuillez remplir tous les champs.");
     return;
   }
@@ -187,7 +189,6 @@ window.copierLettre = function () {
   }
 
   navigator.clipboard.writeText(texte);
-
   afficherNotification("Lettre copiée.");
 };
 
@@ -215,7 +216,7 @@ window.telechargerPDF = function () {
   const texte = document.getElementById("resultat").innerText;
 
   if (!texte || texte.includes("Veuillez remplir")) {
-  afficherNotification("Génère une lettre avant le PDF.");
+    afficherNotification("Génère une lettre avant le PDF.");
     return;
   }
 
@@ -379,24 +380,6 @@ window.passerPremium = async function () {
     window.location.href = data.url;
   } catch (error) {
     console.error("Erreur Stripe :", error);
-    afficherNotification("Erreur Stripe.");  
+    afficherNotification("Erreur Stripe.");
   }
 };
-
-
-/* =========================
-   NOTIFICATIONS
-========================= */
-
-function afficherNotification(message) {
-  const notification = document.getElementById("notification");
-
-  if (!notification) return;
-
-  notification.innerText = message;
-  notification.classList.add("show");
-
-  setTimeout(() => {
-    notification.classList.remove("show");
-  }, 3000);
-}
