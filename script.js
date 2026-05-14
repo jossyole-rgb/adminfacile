@@ -99,6 +99,10 @@ window.genererLettre = async function () {
     }
 
     bouton.disabled = true;
+    document.getElementById("typeLettre").disabled = true;
+    document.getElementById("nom").disabled = true;
+    document.getElementById("destinataire").disabled = true;
+    document.getElementById("objet").disabled = true;
     bouton.innerText = "Génération...";
     loader.style.display = "block";
     resultat.innerText = "L’IA rédige votre lettre...";
@@ -127,6 +131,10 @@ window.genererLettre = async function () {
 
     resultat.innerText = data.lettre;
 
+    document.getElementById("btnCopier").disabled = false;
+    document.getElementById("btnTelecharger").disabled = false;
+    document.getElementById("btnPDF").disabled = false;
+
     await sauvegarderLettre({
       type,
       contenu: data.lettre,
@@ -147,6 +155,10 @@ window.genererLettre = async function () {
   } finally {
     loader.style.display = "none";
     bouton.disabled = false;
+    document.getElementById("typeLettre").disabled = false;
+    document.getElementById("nom").disabled = false;
+    document.getElementById("destinataire").disabled = false;
+    document.getElementById("objet").disabled = false;
     bouton.innerText = "Générer ma lettre";
   }
 };
@@ -169,6 +181,7 @@ async function sauvegarderLettre({ type, contenu, nom, destinataire }) {
     });
 
     console.log("Lettre sauvegardée dans Firestore");
+    afficherNotification("Lettre sauvegardée dans l’historique.");
   } catch (error) {
     console.error("Erreur Firestore :", error);
     afficherNotification("Lettre générée, mais non sauvegardée.");
@@ -183,7 +196,7 @@ async function sauvegarderLettre({ type, contenu, nom, destinataire }) {
 window.copierLettre = function () {
   const texte = document.getElementById("resultat").innerText;
 
-  if (!texte) {
+  if (!texte || texte.includes("Votre lettre apparaîtra ici")) {
     afficherNotification("Aucune lettre à copier.");
     return;
   }
@@ -196,7 +209,7 @@ window.copierLettre = function () {
 window.telechargerLettre = function () {
   const texte = document.getElementById("resultat").innerText;
 
-  if (!texte) {
+  if (!texte || texte.includes("Votre lettre apparaîtra ici")) {
     afficherNotification("Aucune lettre à télécharger.");
     return;
   }
@@ -260,10 +273,19 @@ window.chargerHistorique = async function () {
 
     historique.innerHTML = "";
 
-    if (querySnapshot.empty) {
-      historique.innerHTML = "Aucune lettre enregistrée pour ce compte.";
-      return;
-    }
+if (querySnapshot.empty) {
+  historique.innerHTML = `
+    <div class="historique-vide">
+      <h3>📭 Aucun historique</h3>
+
+      <p>
+        Vos lettres générées apparaîtront ici automatiquement.
+      </p>
+    </div>
+  `;
+
+  return;
+}
 
     querySnapshot.forEach((document) => {
       const lettre = document.data();
@@ -382,4 +404,45 @@ window.passerPremium = async function () {
     console.error("Erreur Stripe :", error);
     afficherNotification("Erreur Stripe.");
   }
+};
+
+
+/* =========================
+   RÉINITIALISATION FORMULAIRE
+========================= */
+
+window.reinitialiserFormulaire = function () {
+
+  document.getElementById("typeLettre").value = "resiliation";
+
+  document.getElementById("nom").value = "";
+
+  document.getElementById("destinataire").value = "";
+
+  document.getElementById("objet").value = "";
+
+  document.getElementById("resultat").innerText =
+    "✨ Votre lettre apparaîtra ici après génération.";
+
+  document.getElementById("btnCopier").disabled = true;
+
+  document.getElementById("btnTelecharger").disabled = true;
+
+  document.getElementById("btnPDF").disabled = true;
+
+  afficherNotification("Formulaire réinitialisé.");
+};
+
+
+/* =========================
+   MASQUER HISTORIQUE
+========================= */
+
+window.masquerHistorique = function () {
+
+  const historique = document.getElementById("historique");
+
+  historique.innerHTML = "";
+
+  afficherNotification("Historique masqué.");
 };

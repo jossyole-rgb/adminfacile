@@ -104,6 +104,9 @@
     <button id="btnGenerer" onclick="genererLettre()">
       Générer ma lettre
     </button>
+    <button id="btnReset" onclick="reinitialiserFormulaire()">
+      Réinitialiser
+    </button>
 
     <!-- Loader affiché pendant la génération -->
     <div id="loaderIA" class="loader-ia">
@@ -111,15 +114,39 @@
       <p>L’IA rédige votre lettre...</p>
     </div>
 
-    <!-- Résultat généré par l’IA -->
-    <section id="resultat" class="resultat"></section>
+<!-- Résultat généré par l’IA -->
+<section id="resultat" class="resultat">
+  ✨ Votre lettre apparaîtra ici après génération.
+</section>
 
     <!-- Actions sur la lettre -->
-    <div class="actions">
-      <button onclick="copierLettre()">Copier la lettre</button>
-      <button onclick="telechargerLettre()">Télécharger la lettre</button>
-      <button onclick="telechargerPDF()">Télécharger en PDF</button>
-    </div>
+  <div class="actions">
+
+    <button
+      id="btnCopier"
+      onclick="copierLettre()"
+      disabled
+    >
+      Copier la lettre
+    </button>
+
+    <button
+      id="btnTelecharger"
+      onclick="telechargerLettre()"
+      disabled
+    >
+      Télécharger la lettre
+    </button>
+
+    <button
+      id="btnPDF"
+      onclick="telechargerPDF()"
+      disabled
+    >
+      Télécharger en PDF
+    </button>
+
+  </div>
   </main>
 
 
@@ -172,15 +199,25 @@
   <!-- =========================
        HISTORIQUE DES LETTRES
   ========================== -->
-  <section class="historique-box">
-    <h2>Historique des lettres</h2>
+    <section class="historique-box">
 
-    <button onclick="chargerHistorique()">
-      Afficher mon historique
-    </button>
+      <h2>Historique des lettres</h2>
 
-    <div id="historique"></div>
-  </section>
+      <div class="actions">
+
+        <button onclick="chargerHistorique()">
+          Afficher mon historique
+        </button>
+
+        <button onclick="masquerHistorique()">
+          Masquer
+        </button>
+
+      </div>
+
+      <div id="historique"></div>
+
+    </section>
 
 
   <!-- =========================
