@@ -326,7 +326,7 @@ window.chargerHistorique = async function () {
               class="btn-supprimer"
               onclick="supprimerLettre('${document.id}')"
             >
-              Supprimer
+              🗑️ Supprimer
             </button>
           </div>
 
