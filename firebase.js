@@ -2,12 +2,10 @@
    IMPORTS FIREBASE
 ========================= */
 
-/* Firebase App */
 import {
   initializeApp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-/* Firebase Authentication */
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -16,7 +14,6 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* Firebase Firestore */
 import {
   getFirestore
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -41,12 +38,26 @@ const firebaseConfig = {
 ========================= */
 
 const app = initializeApp(firebaseConfig);
-
-/* Authentification Firebase */
 const auth = getAuth(app);
-
-/* Base de données Firestore */
 const db = getFirestore(app);
+
+
+/* =========================
+   NOTIFICATIONS
+========================= */
+
+function afficherNotification(message) {
+  const notification = document.getElementById("notification");
+
+  if (!notification) return;
+
+  notification.innerText = message;
+  notification.classList.add("show");
+
+  setTimeout(() => {
+    notification.classList.remove("show");
+  }, 3000);
+}
 
 
 /* =========================
@@ -55,29 +66,19 @@ const db = getFirestore(app);
 
 window.creerCompte = async function () {
   const email = document.getElementById("email").value.trim();
-
-  const password = document
-    .getElementById("password")
-    .value
-    .trim();
+  const password = document.getElementById("password").value.trim();
 
   if (!email || !password) {
-    alert("Veuillez remplir tous les champs.");
+    afficherNotification("Veuillez remplir tous les champs.");
     return;
   }
 
   try {
-    await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    alert("Compte créé avec succès !");
+    await createUserWithEmailAndPassword(auth, email, password);
+    afficherNotification("Compte créé avec succès !");
   } catch (error) {
     console.error("Erreur création compte :", error);
-
-    alert(error.message);
+    afficherNotification("Erreur lors de la création du compte.");
   }
 };
 
@@ -88,29 +89,19 @@ window.creerCompte = async function () {
 
 window.connexion = async function () {
   const email = document.getElementById("email").value.trim();
-
-  const password = document
-    .getElementById("password")
-    .value
-    .trim();
+  const password = document.getElementById("password").value.trim();
 
   if (!email || !password) {
-    alert("Veuillez remplir tous les champs.");
+    afficherNotification("Veuillez remplir tous les champs.");
     return;
   }
 
   try {
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    alert("Connexion réussie !");
+    await signInWithEmailAndPassword(auth, email, password);
+    afficherNotification("Connexion réussie !");
   } catch (error) {
     console.error("Erreur connexion :", error);
-
-    alert(error.message);
+    afficherNotification("Email ou mot de passe incorrect.");
   }
 };
 
@@ -122,12 +113,10 @@ window.connexion = async function () {
 window.deconnexion = async function () {
   try {
     await signOut(auth);
-
-    alert("Déconnexion réussie !");
+    afficherNotification("Déconnexion effectuée.");
   } catch (error) {
     console.error("Erreur déconnexion :", error);
-
-    alert("Erreur lors de la déconnexion.");
+    afficherNotification("Erreur lors de la déconnexion.");
   }
 };
 

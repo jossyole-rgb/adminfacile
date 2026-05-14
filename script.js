@@ -20,6 +20,22 @@ import {
 let utilisateurConnecte = null;
 let utilisateurPremium = false;
 
+/* =========================
+   NOTIFICATIONS
+========================= */
+
+function afficherNotification(message) {
+  const notification = document.getElementById("notification");
+
+  notification.innerText = message;
+
+  notification.classList.add("show");
+
+  setTimeout(() => {
+    notification.classList.remove("show");
+  }, 3000);
+}
+
 
 /* =========================
    AUTHENTIFICATION
@@ -199,7 +215,7 @@ window.telechargerPDF = function () {
   const texte = document.getElementById("resultat").innerText;
 
   if (!texte || texte.includes("Veuillez remplir")) {
-    afficherNotification("Génère d’abord une lettre.");
+  afficherNotification("Génère une lettre avant le PDF.");
     return;
   }
 
@@ -363,7 +379,7 @@ window.passerPremium = async function () {
     window.location.href = data.url;
   } catch (error) {
     console.error("Erreur Stripe :", error);
-    afficherNotification("Erreur lors de la redirection Stripe.");
+    afficherNotification("Erreur Stripe.");  
   }
 };
 
