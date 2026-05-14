@@ -508,3 +508,59 @@ select:disabled {
     text-align: center;
   }
 }
+
+
+/* =========================
+   MODE SOMBRE
+========================= */
+
+.dark-mode {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.dark-mode .navbar,
+.dark-mode .container,
+.dark-mode .auth-box,
+.dark-mode .dashboard-box,
+.dark-mode .historique-box,
+.dark-mode .lettre-card,
+.dark-mode .resultat,
+.dark-mode .dashboard-card {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.dark-mode p,
+.dark-mode label,
+.dark-mode small,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3 {
+  color: #f8fafc;
+}
+
+.dark-mode input,
+.dark-mode textarea,
+.dark-mode select {
+  background: #334155;
+  color: white;
+  border: 1px solid #475569;
+}
+
+.dark-mode .nav-links a {
+  color: white;
+}
+
+.dark-mode .resultat {
+  border-left: 5px solid #60a5fa;
+}
+
+.dark-mode .historique-vide {
+  background: #1e293b;
+  border: 2px dashed #475569;
+}
+
+.dark-mode .btn-delete {
+  background: #dc2626;
+}

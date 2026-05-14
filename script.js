@@ -494,3 +494,49 @@ window.masquerHistorique = function () {
 
   afficherNotification("Historique masqué.");
 };
+
+
+/* =========================
+   MODE SOMBRE
+========================= */
+
+window.changerTheme = function () {
+
+  document.body.classList.toggle("dark-mode");
+
+  const boutonTheme = document.getElementById("btnTheme");
+
+  const modeSombre =
+    document.body.classList.contains("dark-mode");
+
+  if (modeSombre) {
+    boutonTheme.innerText = "☀️ Mode clair";
+
+    localStorage.setItem("theme", "dark");
+  } else {
+    boutonTheme.innerText = "🌙 Mode sombre";
+
+    localStorage.setItem("theme", "light");
+  }
+};
+
+
+/* =========================
+   CHARGEMENT THÈME SAUVEGARDÉ
+========================= */
+
+window.addEventListener("DOMContentLoaded", () => {
+
+  const themeSauvegarde =
+    localStorage.getItem("theme");
+
+  const boutonTheme =
+    document.getElementById("btnTheme");
+
+  if (themeSauvegarde === "dark") {
+
+    document.body.classList.add("dark-mode");
+
+    boutonTheme.innerText = "☀️ Mode clair";
+  }
+});
