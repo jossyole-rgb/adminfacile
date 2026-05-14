@@ -1,14 +1,28 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <!-- Configuration générale -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Titre de l’application -->
   <title>AdminFacile</title>
+
+  <!-- Fichier CSS principal -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
+  <!-- =========================
+       NOTIFICATIONS
+  ========================== -->
+  <div id="notification" class="notification"></div>
+
+
+  <!-- =========================
+       NAVIGATION
+  ========================== -->
   <nav class="navbar">
     <div class="logo">AdminFacile</div>
 
@@ -19,11 +33,21 @@
     </div>
   </nav>
 
+
+  <!-- =========================
+       HERO / INTRODUCTION
+  ========================== -->
   <header class="hero">
     <h1>AdminFacile</h1>
-    <p>L’assistant administratif intelligent pour étudiants et jeunes actifs.</p>
+    <p>
+      L’assistant administratif intelligent pour étudiants et jeunes actifs.
+    </p>
   </header>
 
+
+  <!-- =========================
+       AUTHENTIFICATION
+  ========================== -->
   <section class="auth-box">
     <h2>Connexion</h2>
 
@@ -37,11 +61,18 @@
     </div>
   </section>
 
+
+  <!-- =========================
+       GÉNÉRATION DE LETTRE
+  ========================== -->
   <main class="container">
     <h1>Générer une lettre</h1>
-    <p>Crée une lettre administrative personnalisée en quelques secondes.</p>
+    <p>
+      Crée une lettre administrative personnalisée en quelques secondes.
+    </p>
 
-    <label>Type de lettre</label>
+    <!-- Choix du type de lettre -->
+    <label for="typeLettre">Type de lettre</label>
     <select id="typeLettre">
       <option value="resiliation">Résiliation</option>
       <option value="caf">Réclamation CAF</option>
@@ -52,24 +83,38 @@
       <option value="emploi">Candidature à un emploi</option>
     </select>
 
-    <label>Ton nom complet</label>
+    <!-- Informations utilisateur -->
+    <label for="nom">Ton nom complet</label>
     <input id="nom" type="text" placeholder="Ex : Josseran Yole" />
 
-    <label>Destinataire</label>
-    <input id="destinataire" type="text" placeholder="Ex : CAF, propriétaire..." />
+    <label for="destinataire">Destinataire</label>
+    <input
+      id="destinataire"
+      type="text"
+      placeholder="Ex : CAF, propriétaire..."
+    />
 
-    <label>Objet de la demande</label>
-    <textarea id="objet" placeholder="Explique brièvement ta demande"></textarea>
+    <label for="objet">Objet de la demande</label>
+    <textarea
+      id="objet"
+      placeholder="Explique brièvement ta demande"
+    ></textarea>
 
-    <button id="btnGenerer" onclick="genererLettre()">Générer ma lettre</button>
+    <!-- Bouton de génération IA -->
+    <button id="btnGenerer" onclick="genererLettre()">
+      Générer ma lettre
+    </button>
 
+    <!-- Loader affiché pendant la génération -->
     <div id="loaderIA" class="loader-ia">
       <div class="loader-circle"></div>
       <p>L’IA rédige votre lettre...</p>
     </div>
 
+    <!-- Résultat généré par l’IA -->
     <section id="resultat" class="resultat"></section>
 
+    <!-- Actions sur la lettre -->
     <div class="actions">
       <button onclick="copierLettre()">Copier la lettre</button>
       <button onclick="telechargerLettre()">Télécharger la lettre</button>
@@ -77,47 +122,79 @@
     </div>
   </main>
 
+
+  <!-- =========================
+       DASHBOARD UTILISATEUR
+  ========================== -->
   <section class="dashboard-box">
     <h2>Mon Dashboard</h2>
 
     <div class="dashboard-grid">
+
+      <!-- Email utilisateur -->
       <div class="dashboard-card">
         <h3>Email</h3>
         <p id="userEmail">Non connecté</p>
       </div>
 
+      <!-- Nombre total de lettres -->
       <div class="dashboard-card">
         <h3>Lettres générées</h3>
         <p id="nombreLettres">0</p>
       </div>
 
+      <!-- Statut du compte -->
       <div class="dashboard-card">
         <h3>Statut</h3>
         <p id="statutCompte">Version gratuite</p>
       </div>
 
+      <!-- Limite de la version gratuite -->
       <div class="dashboard-card">
         <h3>Limite gratuite</h3>
         <p id="limiteGratuite">3 restantes</p>
       </div>
 
+      <!-- Carte Premium -->
       <div class="dashboard-card premium-card">
         <h3>Premium</h3>
         <p>Illimité + IA avancée</p>
 
-        <button onclick="passerPremium()">Passer Premium</button>
+        <button onclick="passerPremium()">
+          Passer Premium
+        </button>
       </div>
+
     </div>
   </section>
 
+
+  <!-- =========================
+       HISTORIQUE DES LETTRES
+  ========================== -->
   <section class="historique-box">
     <h2>Historique des lettres</h2>
-    <button onclick="chargerHistorique()">Afficher mon historique</button>
+
+    <button onclick="chargerHistorique()">
+      Afficher mon historique
+    </button>
+
     <div id="historique"></div>
   </section>
 
+
+  <!-- =========================
+       SCRIPTS
+  ========================== -->
+
+  <!-- Bibliothèque PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
+
+  <!-- JavaScript principal -->
   <script type="module" src="script.js"></script>
+
 </body>
 </html>

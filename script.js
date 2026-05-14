@@ -1,3 +1,7 @@
+/* =========================
+   IMPORTS FIREBASE
+========================= */
+
 import { db, auth, onAuthStateChanged } from "./firebase.js";
 
 import {
@@ -8,24 +12,40 @@ import {
   where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+/* =========================
+   VARIABLES GLOBALES
+========================= */
+
 let utilisateurConnecte = null;
 let utilisateurPremium = false;
+
+
+/* =========================
+   AUTHENTIFICATION
+========================= */
 
 onAuthStateChanged(auth, async (user) => {
   utilisateurConnecte = user;
 
   if (user) {
     await verifierPremium(user.email);
+    afficherNotification("Connexion détectée.");
   }
 
   mettreAJourDashboard();
 });
 
+
+/* =========================
+   GÉNÉRATION DE LETTRE IA
+========================= */
+
 window.genererLettre = async function () {
   const type = document.getElementById("typeLettre").value;
-  const nom = document.getElementById("nom").value;
-  const destinataire = document.getElementById("destinataire").value;
-  const objet = document.getElementById("objet").value;
+  const nom = document.getElementById("nom").value.trim();
+  const destinataire = document.getElementById("destinataire").value.trim();
+  const objet = document.getElementById("objet").value.trim();
 
   const resultat = document.getElementById("resultat");
   const bouton = document.getElementById("btnGenerer");
@@ -33,12 +53,14 @@ window.genererLettre = async function () {
 
   if (!utilisateurConnecte) {
     resultat.innerText = "Connecte-toi avant de générer une lettre.";
+    afficherNotification("Connecte-toi avant de générer une lettre.");
     return;
   }
 
   if (!nom || !destinataire || !objet) {
     resultat.innerText =
       "Veuillez remplir tous les champs avant de générer la lettre.";
+    afficherNotification("Veuillez remplir tous les champs.");
     return;
   }
 
@@ -53,6 +75,8 @@ window.genererLettre = async function () {
     if (!utilisateurPremium && querySnapshot.size >= 3) {
       resultat.innerText =
         "Limite gratuite atteinte. Passe à la version Premium.";
+
+      afficherNotification("Limite gratuite atteinte.");
       return;
     }
 
@@ -79,28 +103,29 @@ window.genererLettre = async function () {
 
     const data = await reponse.json();
 
+    if (!data.lettre) {
+      throw new Error("Aucune lettre reçue depuis le serveur.");
+    }
+
     resultat.innerText = data.lettre;
 
-    try {
-      await addDoc(collection(db, "lettres"), {
-        type,
-        contenu: data.lettre,
-        date: new Date().toLocaleDateString(),
-        nom,
-        destinataire,
-        userId: utilisateurConnecte.uid,
-        email: utilisateurConnecte.email
-      });
+    await sauvegarderLettre({
+      type,
+      contenu: data.lettre,
+      nom,
+      destinataire
+    });
 
-      console.log("Lettre sauvegardée dans Firestore");
-      mettreAJourDashboard();
-    } catch (firestoreError) {
-      console.error("Erreur Firestore :", firestoreError);
-    }
+    await mettreAJourDashboard();
+
+    afficherNotification("Lettre générée avec succès.");
   } catch (error) {
-    console.error(error);
+    console.error("Erreur génération :", error);
+
     resultat.innerText =
       "Erreur lors de la génération. Vérifiez le serveur.";
+
+    afficherNotification("Erreur lors de la génération.");
   } finally {
     loader.style.display = "none";
     bouton.disabled = false;
@@ -108,16 +133,56 @@ window.genererLettre = async function () {
   }
 };
 
+
+/* =========================
+   SAUVEGARDE FIRESTORE
+========================= */
+
+async function sauvegarderLettre({ type, contenu, nom, destinataire }) {
+  try {
+    await addDoc(collection(db, "lettres"), {
+      type,
+      contenu,
+      nom,
+      destinataire,
+      date: new Date().toLocaleDateString(),
+      userId: utilisateurConnecte.uid,
+      email: utilisateurConnecte.email
+    });
+
+    console.log("Lettre sauvegardée dans Firestore");
+  } catch (error) {
+    console.error("Erreur Firestore :", error);
+    afficherNotification("Lettre générée, mais non sauvegardée.");
+  }
+}
+
+
+/* =========================
+   ACTIONS SUR LA LETTRE
+========================= */
+
 window.copierLettre = function () {
   const texte = document.getElementById("resultat").innerText;
 
+  if (!texte) {
+    afficherNotification("Aucune lettre à copier.");
+    return;
+  }
+
   navigator.clipboard.writeText(texte);
 
-  alert("Lettre copiée !");
+  afficherNotification("Lettre copiée.");
 };
+
 
 window.telechargerLettre = function () {
   const texte = document.getElementById("resultat").innerText;
+
+  if (!texte) {
+    afficherNotification("Aucune lettre à télécharger.");
+    return;
+  }
 
   const blob = new Blob([texte], { type: "text/plain" });
   const lien = document.createElement("a");
@@ -125,13 +190,16 @@ window.telechargerLettre = function () {
   lien.href = URL.createObjectURL(blob);
   lien.download = "lettre_adminfacile.txt";
   lien.click();
+
+  afficherNotification("Lettre téléchargée.");
 };
+
 
 window.telechargerPDF = function () {
   const texte = document.getElementById("resultat").innerText;
 
   if (!texte || texte.includes("Veuillez remplir")) {
-    alert("Génère d’abord une lettre avant de télécharger le PDF.");
+    afficherNotification("Génère d’abord une lettre.");
     return;
   }
 
@@ -145,7 +213,14 @@ window.telechargerPDF = function () {
 
   doc.text(lignes, 15, 20);
   doc.save("lettre_adminfacile.pdf");
+
+  afficherNotification("PDF téléchargé.");
 };
+
+
+/* =========================
+   HISTORIQUE DES LETTRES
+========================= */
 
 window.chargerHistorique = async function () {
   const historique = document.getElementById("historique");
@@ -155,6 +230,7 @@ window.chargerHistorique = async function () {
   try {
     if (!utilisateurConnecte) {
       historique.innerHTML = "Connecte-toi pour voir ton historique.";
+      afficherNotification("Connecte-toi pour voir l’historique.");
       return;
     }
 
@@ -183,11 +259,21 @@ window.chargerHistorique = async function () {
         </div>
       `;
     });
+
+    afficherNotification("Historique chargé.");
   } catch (error) {
-    console.error(error);
+    console.error("Erreur historique :", error);
+
     historique.innerHTML = "Erreur lors du chargement de l’historique.";
+
+    afficherNotification("Erreur lors du chargement.");
   }
 };
+
+
+/* =========================
+   STATUT PREMIUM
+========================= */
 
 async function verifierPremium(email) {
   try {
@@ -209,6 +295,11 @@ async function verifierPremium(email) {
     utilisateurPremium = false;
   }
 }
+
+
+/* =========================
+   DASHBOARD UTILISATEUR
+========================= */
 
 async function mettreAJourDashboard() {
   const userEmail = document.getElementById("userEmail");
@@ -249,6 +340,11 @@ async function mettreAJourDashboard() {
   }
 }
 
+
+/* =========================
+   PAIEMENT STRIPE PREMIUM
+========================= */
+
 window.passerPremium = async function () {
   try {
     const response = await fetch(
@@ -260,9 +356,31 @@ window.passerPremium = async function () {
 
     const data = await response.json();
 
+    if (!data.url) {
+      throw new Error("URL Stripe absente.");
+    }
+
     window.location.href = data.url;
   } catch (error) {
-    console.error(error);
-    alert("Erreur lors de la redirection Stripe.");
+    console.error("Erreur Stripe :", error);
+    afficherNotification("Erreur lors de la redirection Stripe.");
   }
 };
+
+
+/* =========================
+   NOTIFICATIONS
+========================= */
+
+function afficherNotification(message) {
+  const notification = document.getElementById("notification");
+
+  if (!notification) return;
+
+  notification.innerText = message;
+  notification.classList.add("show");
+
+  setTimeout(() => {
+    notification.classList.remove("show");
+  }, 3000);
+}
