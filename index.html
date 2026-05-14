@@ -6,55 +6,51 @@
   <title>AdminFacile</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-<header class="hero">
-  <h1>AdminFacile</h1>
-  <p>
-    L’assistant administratif intelligent pour étudiants et jeunes actifs.
-  </p>
-</header>
+  <nav class="navbar">
+    <div class="logo">AdminFacile</div>
 
-<nav class="navbar">
-  <div class="logo">AdminFacile</div>
+    <div class="nav-links">
+      <a href="#">Accueil</a>
+      <a href="#">Services</a>
+      <a href="#">Contact</a>
+    </div>
+  </nav>
 
-  <div class="nav-links">
-    <a href="#">Accueil</a>
-    <a href="#">Services</a>
-    <a href="#">Contact</a>
-  </div>
-</nav>
+  <header class="hero">
+    <h1>AdminFacile</h1>
+    <p>L’assistant administratif intelligent pour étudiants et jeunes actifs.</p>
+  </header>
 
-<section class="auth-box">
-  <h2>Connexion</h2>
+  <section class="auth-box">
+    <h2>Connexion</h2>
 
-  <input id="email" type="email" placeholder="Email" />
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Mot de passe" />
 
-  <input id="password" type="password" placeholder="Mot de passe" />
-
-  <div class="actions">
-    <button onclick="creerCompte()">Créer un compte</button>
-
-    <button onclick="connexion()">Connexion</button>
-
-    <button onclick="deconnexion()">Déconnexion</button>
-  </div>
-</section>
+    <div class="actions">
+      <button onclick="creerCompte()">Créer un compte</button>
+      <button onclick="connexion()">Connexion</button>
+      <button onclick="deconnexion()">Déconnexion</button>
+    </div>
+  </section>
 
   <main class="container">
-    <h1>AdminFacile</h1>
-    <p>Génère une lettre administrative simplement.</p>
+    <h1>Générer une lettre</h1>
+    <p>Crée une lettre administrative personnalisée en quelques secondes.</p>
 
     <label>Type de lettre</label>
     <select id="typeLettre">
-        <option value="resiliation">Résiliation</option>
-        <option value="caf">Réclamation CAF</option>
-        <option value="delai">Demande de délai de paiement</option>
-        <option value="logement">Demande de logement</option>
-        <option value="apl">Demande d’APL</option>
-        <option value="stage">Demande de stage</option>
-        <option value="emploi">Candidature à un emploi</option>
-</select>
+      <option value="resiliation">Résiliation</option>
+      <option value="caf">Réclamation CAF</option>
+      <option value="delai">Demande de délai de paiement</option>
+      <option value="logement">Demande de logement</option>
+      <option value="apl">Demande d’APL</option>
+      <option value="stage">Demande de stage</option>
+      <option value="emploi">Candidature à un emploi</option>
+    </select>
 
     <label>Ton nom complet</label>
     <input id="nom" type="text" placeholder="Ex : Josseran Yole" />
@@ -65,70 +61,60 @@
     <label>Objet de la demande</label>
     <textarea id="objet" placeholder="Explique brièvement ta demande"></textarea>
 
-    <button id="btnGenerer" onclick="genererLettre()">
-  Générer ma lettre
-</button>
+    <button id="btnGenerer" onclick="genererLettre()">Générer ma lettre</button>
 
-    <button onclick="passerPremium()" class="btn-premium">
-  Passer Premium
-</button>
-
-<div id="loaderIA" class="loader-ia">
-  <div class="loader-circle"></div>
-  <p>L’IA rédige votre lettre...</p>
-</div>
+    <div id="loaderIA" class="loader-ia">
+      <div class="loader-circle"></div>
+      <p>L’IA rédige votre lettre...</p>
+    </div>
 
     <section id="resultat" class="resultat"></section>
 
-<div class="actions">
-  <button onclick="copierLettre()">Copier la lettre</button>
-  <button onclick="telechargerLettre()">Télécharger la lettre</button>
-  <button onclick="telechargerPDF()">Télécharger en PDF</button>
-</div>
-
-<section class="dashboard-box">
-  <h2>Mon Dashboard</h2>
-
-  <div class="dashboard-grid">
-
-    <div class="dashboard-card">
-      <h3>Email</h3>
-      <p id="userEmail">Non connecté</p>
+    <div class="actions">
+      <button onclick="copierLettre()">Copier la lettre</button>
+      <button onclick="telechargerLettre()">Télécharger la lettre</button>
+      <button onclick="telechargerPDF()">Télécharger en PDF</button>
     </div>
-
-    <div class="dashboard-card">
-      <h3>Lettres générées</h3>
-      <p id="nombreLettres">0</p>
-    </div>
-
-    <div class="dashboard-card">
-      <h3>Statut</h3>
-      <p>Version gratuite</p>
-    </div>
-    
-    <div class="dashboard-card">
-      <h3>Limite gratuite</h3>
-      <p id="limiteGratuite">3 restantes</p>
-    </div>
-    
-    <div class="dashboard-card premium-card">
-      <h3>Premium</h3>
-      <p>Illimité + IA avancée</p>
-
-      <button onclick="passerPremium()">
-        Passer Premium
-      </button>
-    </div>
-
-  </div>
-</section>
-
-<section class="historique-box">
-  <h2>Historique des lettres</h2>
-  <button onclick="chargerHistorique()">Afficher mon historique</button>
-  <div id="historique"></div>
-</section>
   </main>
+
+  <section class="dashboard-box">
+    <h2>Mon Dashboard</h2>
+
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <h3>Email</h3>
+        <p id="userEmail">Non connecté</p>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Lettres générées</h3>
+        <p id="nombreLettres">0</p>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Statut</h3>
+        <p id="statutCompte">Version gratuite</p>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Limite gratuite</h3>
+        <p id="limiteGratuite">3 restantes</p>
+      </div>
+
+      <div class="dashboard-card premium-card">
+        <h3>Premium</h3>
+        <p>Illimité + IA avancée</p>
+
+        <button onclick="passerPremium()">Passer Premium</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="historique-box">
+    <h2>Historique des lettres</h2>
+    <button onclick="chargerHistorique()">Afficher mon historique</button>
+    <div id="historique"></div>
+  </section>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script type="module" src="firebase.js"></script>

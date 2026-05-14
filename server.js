@@ -24,6 +24,44 @@ const client = new OpenAI({
 });
 
 app.use(cors());
+app.post(
+  "/stripe-webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+
+        const email = session.customer_details.email;
+
+        const usersRef = firestore.collection("users");
+        const snapshot = await usersRef.where("Email", "==", email).get();
+
+        if (!snapshot.empty) {
+          snapshot.forEach(async (doc) => {
+            await doc.ref.update({
+              Premium: true,
+            });
+          });
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Erreur webhook Stripe :", error.message);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  }
+);
+
 app.use(express.json());
 
 app.post("/generer-lettre", async (req, res) => {
