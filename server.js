@@ -72,6 +72,7 @@ app.post(
       if (event.type === "checkout.session.completed") {
         const session = event.data.object;
         const email = session.customer_details.email;
+        const customerId = session.customer;
 
         if (!email) {
           console.log("Aucun email trouvé dans la session Stripe.");
@@ -88,6 +89,7 @@ app.post(
             updates.push(
               document.ref.update({
                 Premium: true,
+                customerId: customerId
               })
             );
           });
@@ -99,6 +101,7 @@ app.post(
           await usersRef.add({
             Email: email,
             Premium: true,
+            customerId: customerId,
             createdAt: new Date().toISOString(),
           });
 
@@ -206,6 +209,43 @@ app.post("/create-checkout-session", async (req, res) => {
 
     res.status(500).json({
       error: "Erreur lors de la création de la session Stripe.",
+    });
+  }
+});
+
+
+/* =========================
+   PORTAIL CLIENT STRIPE
+========================= */
+
+app.post("/create-customer-portal-session", async (req, res) => {
+
+  try {
+
+    const { customerId } = req.body;
+
+    const session =
+      await stripe.billingPortal.sessions.create({
+
+        customer: customerId,
+
+        return_url:
+          "https://venerable-pixie-e9c9a9.netlify.app"
+      });
+
+    res.json({
+      url: session.url
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Erreur portail Stripe :",
+      error
+    );
+
+    res.status(500).json({
+      error: error.message
     });
   }
 });

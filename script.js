@@ -471,6 +471,22 @@ window.passerPremium = async function () {
 
 
 /* =========================
+   PORTAIL CLIENT STRIPE
+========================= */
+
+window.gererAbonnement = async function () {
+  try {
+    afficherNotification(
+      "Le portail client Stripe sera connecté à votre compte prochainement."
+    );
+  } catch (error) {
+    console.error("Erreur portail Stripe :", error);
+    afficherNotification("Erreur lors de l’ouverture du portail.");
+  }
+};
+
+
+/* =========================
    RÉINITIALISATION FORMULAIRE
 ========================= */
 
