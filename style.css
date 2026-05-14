@@ -398,3 +398,27 @@ select:disabled {
 .historique-vide p {
   color: #64748b;
 }
+
+
+/* =========================
+   SUPPRESSION HISTORIQUE
+========================= */
+
+.lettre-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-delete {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 12px;
+  background: #dc2626;
+  font-size: 14px;
+}
+
+.btn-delete:hover {
+  background: #b91c1c;
+}

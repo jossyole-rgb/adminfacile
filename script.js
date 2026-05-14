@@ -9,7 +9,9 @@ import {
   addDoc,
   getDocs,
   query,
-  where
+  where,
+  deleteDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -50,7 +52,7 @@ onAuthStateChanged(auth, async (user) => {
     await verifierPremium(user.email);
   }
 
-  mettreAJourDashboard();
+  await mettreAJourDashboard();
 });
 
 
@@ -99,13 +101,11 @@ window.genererLettre = async function () {
     }
 
     bouton.disabled = true;
-    document.getElementById("typeLettre").disabled = true;
-    document.getElementById("nom").disabled = true;
-    document.getElementById("destinataire").disabled = true;
-    document.getElementById("objet").disabled = true;
     bouton.innerText = "Génération...";
     loader.style.display = "block";
     resultat.innerText = "L’IA rédige votre lettre...";
+
+    desactiverFormulaire(true);
 
     const reponse = await fetch(
       "https://adminfacile.onrender.com/generer-lettre",
@@ -131,9 +131,7 @@ window.genererLettre = async function () {
 
     resultat.innerText = data.lettre;
 
-    document.getElementById("btnCopier").disabled = false;
-    document.getElementById("btnTelecharger").disabled = false;
-    document.getElementById("btnPDF").disabled = false;
+    activerBoutonsLettre(true);
 
     await sauvegarderLettre({
       type,
@@ -155,13 +153,42 @@ window.genererLettre = async function () {
   } finally {
     loader.style.display = "none";
     bouton.disabled = false;
-    document.getElementById("typeLettre").disabled = false;
-    document.getElementById("nom").disabled = false;
-    document.getElementById("destinataire").disabled = false;
-    document.getElementById("objet").disabled = false;
     bouton.innerText = "Générer ma lettre";
+
+    desactiverFormulaire(false);
   }
 };
+
+
+/* =========================
+   HELPERS FORMULAIRE
+========================= */
+
+function desactiverFormulaire(etat) {
+  document.getElementById("typeLettre").disabled = etat;
+  document.getElementById("nom").disabled = etat;
+  document.getElementById("destinataire").disabled = etat;
+  document.getElementById("objet").disabled = etat;
+}
+
+
+function activerBoutonsLettre(etat) {
+  document.getElementById("btnCopier").disabled = !etat;
+  document.getElementById("btnTelecharger").disabled = !etat;
+  document.getElementById("btnPDF").disabled = !etat;
+}
+
+
+function texteResultatEstVide(texte) {
+  return (
+    !texte ||
+    texte.includes("Votre lettre apparaîtra ici") ||
+    texte.includes("Veuillez remplir") ||
+    texte.includes("Connecte-toi") ||
+    texte.includes("Limite gratuite atteinte") ||
+    texte.includes("Erreur lors de la génération")
+  );
+}
 
 
 /* =========================
@@ -180,7 +207,6 @@ async function sauvegarderLettre({ type, contenu, nom, destinataire }) {
       email: utilisateurConnecte.email
     });
 
-    console.log("Lettre sauvegardée dans Firestore");
     afficherNotification("Lettre sauvegardée dans l’historique.");
   } catch (error) {
     console.error("Erreur Firestore :", error);
@@ -196,7 +222,7 @@ async function sauvegarderLettre({ type, contenu, nom, destinataire }) {
 window.copierLettre = function () {
   const texte = document.getElementById("resultat").innerText;
 
-  if (!texte || texte.includes("Votre lettre apparaîtra ici")) {
+  if (texteResultatEstVide(texte)) {
     afficherNotification("Aucune lettre à copier.");
     return;
   }
@@ -209,7 +235,7 @@ window.copierLettre = function () {
 window.telechargerLettre = function () {
   const texte = document.getElementById("resultat").innerText;
 
-  if (!texte || texte.includes("Votre lettre apparaîtra ici")) {
+  if (texteResultatEstVide(texte)) {
     afficherNotification("Aucune lettre à télécharger.");
     return;
   }
@@ -228,7 +254,7 @@ window.telechargerLettre = function () {
 window.telechargerPDF = function () {
   const texte = document.getElementById("resultat").innerText;
 
-  if (!texte || texte.includes("Veuillez remplir")) {
+  if (texteResultatEstVide(texte)) {
     afficherNotification("Génère une lettre avant le PDF.");
     return;
   }
@@ -273,28 +299,41 @@ window.chargerHistorique = async function () {
 
     historique.innerHTML = "";
 
-if (querySnapshot.empty) {
-  historique.innerHTML = `
-    <div class="historique-vide">
-      <h3>📭 Aucun historique</h3>
+    if (querySnapshot.empty) {
+      historique.innerHTML = `
+        <div class="historique-vide">
+          <h3>📭 Aucun historique</h3>
 
-      <p>
-        Vos lettres générées apparaîtront ici automatiquement.
-      </p>
-    </div>
-  `;
+          <p>
+            Vos lettres générées apparaîtront ici automatiquement.
+          </p>
+        </div>
+      `;
 
-  return;
-}
+      return;
+    }
 
     querySnapshot.forEach((document) => {
       const lettre = document.data();
 
       historique.innerHTML += `
         <div class="lettre-card">
-          <h3>${lettre.type}</h3>
+
+          <div class="lettre-header">
+            <h3>${lettre.type}</h3>
+
+            <button 
+              class="btn-supprimer"
+              onclick="supprimerLettre('${document.id}')"
+            >
+              Supprimer
+            </button>
+          </div>
+
           <small>${lettre.date}</small>
+
           <p>${lettre.contenu}</p>
+
         </div>
       `;
     });
@@ -306,6 +345,26 @@ if (querySnapshot.empty) {
     historique.innerHTML = "Erreur lors du chargement de l’historique.";
 
     afficherNotification("Erreur lors du chargement.");
+  }
+};
+
+
+/* =========================
+   SUPPRESSION D’UNE LETTRE
+========================= */
+
+window.supprimerLettre = async function (id) {
+  try {
+    await deleteDoc(doc(db, "lettres", id));
+
+    afficherNotification("Lettre supprimée.");
+
+    await chargerHistorique();
+    await mettreAJourDashboard();
+  } catch (error) {
+    console.error("Erreur suppression :", error);
+
+    afficherNotification("Erreur suppression.");
   }
 };
 
@@ -327,8 +386,6 @@ async function verifierPremium(email) {
     } else {
       utilisateurPremium = false;
     }
-
-    console.log("Premium :", utilisateurPremium);
   } catch (error) {
     console.error("Erreur Premium :", error);
     utilisateurPremium = false;
@@ -412,23 +469,15 @@ window.passerPremium = async function () {
 ========================= */
 
 window.reinitialiserFormulaire = function () {
-
   document.getElementById("typeLettre").value = "resiliation";
-
   document.getElementById("nom").value = "";
-
   document.getElementById("destinataire").value = "";
-
   document.getElementById("objet").value = "";
 
   document.getElementById("resultat").innerText =
     "✨ Votre lettre apparaîtra ici après génération.";
 
-  document.getElementById("btnCopier").disabled = true;
-
-  document.getElementById("btnTelecharger").disabled = true;
-
-  document.getElementById("btnPDF").disabled = true;
+  activerBoutonsLettre(false);
 
   afficherNotification("Formulaire réinitialisé.");
 };
@@ -439,7 +488,6 @@ window.reinitialiserFormulaire = function () {
 ========================= */
 
 window.masquerHistorique = function () {
-
   const historique = document.getElementById("historique");
 
   historique.innerHTML = "";
