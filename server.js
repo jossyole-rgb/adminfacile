@@ -189,7 +189,7 @@ app.post("/create-checkout-session", async (req, res) => {
 
       line_items: [
         {
-          price: "price_1TX7UHGg20bixEhmy2KPxJ9D",
+          price: "price_1TX8G2Gg20bixEhmLmh0uKh5",
           quantity: 1,
         },
       ],
