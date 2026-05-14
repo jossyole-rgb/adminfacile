@@ -564,3 +564,18 @@ select:disabled {
 .dark-mode .btn-delete {
   background: #dc2626;
 }
+
+
+/* =========================
+   BADGES PREMIUM
+========================= */
+
+.premium-badge {
+  color: #facc15;
+  font-weight: bold;
+}
+
+.gratuit-badge {
+  color: #94a3b8;
+  font-weight: bold;
+}

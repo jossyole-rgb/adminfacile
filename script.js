@@ -413,10 +413,16 @@ async function mettreAJourDashboard() {
 
   userEmail.innerText = utilisateurConnecte.email;
 
-  statutCompte.innerText = utilisateurPremium
-    ? "Premium actif"
-    : "Version gratuite";
+  if (utilisateurPremium) {
 
+    statutCompte.innerHTML =
+      "👑 <span class='premium-badge'>Premium actif</span>";
+
+  } else {
+
+    statutCompte.innerHTML =
+      "🆓 <span class='gratuit-badge'>Version gratuite</span>";
+  }
   const q = query(
     collection(db, "lettres"),
     where("userId", "==", utilisateurConnecte.uid)
