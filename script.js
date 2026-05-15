@@ -11,7 +11,8 @@ import {
   query,
   where,
   deleteDoc,
-  doc
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -21,6 +22,7 @@ import {
 
 let utilisateurConnecte = null;
 let utilisateurPremium = false;
+let stripeCustomerId = null;
 
 
 /* =========================
@@ -383,8 +385,10 @@ async function verifierPremium(email) {
       const data = querySnapshot.docs[0].data();
 
       utilisateurPremium = data.Premium === true;
+      stripeCustomerId = data.customerId || null;
     } else {
       utilisateurPremium = false;
+      stripeCustomerId = null;
     }
   } catch (error) {
     console.error("Erreur Premium :", error);
@@ -476,9 +480,36 @@ window.passerPremium = async function () {
 
 window.gererAbonnement = async function () {
   try {
-    afficherNotification(
-      "Le portail client Stripe sera connecté à votre compte prochainement."
+    if (!utilisateurConnecte) {
+      afficherNotification("Connecte-toi pour gérer ton abonnement.");
+      return;
+    }
+
+    if (!stripeCustomerId) {
+      afficherNotification("Aucun abonnement Stripe trouvé.");
+      return;
+    }
+
+    const response = await fetch(
+      "https://adminfacile.onrender.com/create-customer-portal-session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          customerId: stripeCustomerId
+        })
+      }
     );
+
+    const data = await response.json();
+
+    if (!data.url) {
+      throw new Error("URL du portail Stripe absente.");
+    }
+
+    window.location.href = data.url;
   } catch (error) {
     console.error("Erreur portail Stripe :", error);
     afficherNotification("Erreur lors de l’ouverture du portail.");
