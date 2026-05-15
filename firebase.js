@@ -132,5 +132,6 @@ export {
   db,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  sendEmailVerification
+  sendEmailVerification,
+  createUserWithEmailAndPassword
 };

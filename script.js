@@ -7,7 +7,8 @@ import {
   auth,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  sendEmailVerification
+  sendEmailVerification,
+  createUserWithEmailAndPassword
 } from "./firebase.js";
 
 import {
@@ -95,7 +96,8 @@ window.creerCompte = async function () {
   }
 
   try {
-    const userCredential = await auth.createUserWithEmailAndPassword(
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
       email,
       password
     );
@@ -105,7 +107,6 @@ window.creerCompte = async function () {
     afficherNotification("📩 Compte créé. Email de vérification envoyé.");
   } catch (error) {
     console.error("Erreur création compte :", error);
-
     afficherNotification("Erreur lors de la création du compte.");
   }
 };
