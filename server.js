@@ -76,14 +76,20 @@ app.post(
 
         const email = session.customer_details?.email;
         const customerId = session.customer;
+        const uid = session.client_reference_id;
 
         if (!email || !customerId) {
           console.log("Email ou customerId manquant dans la session Stripe.");
           return res.json({ received: true });
         }
 
-        const usersRef = firestore.collection("users");
-        const snapshot = await usersRef.where("email", "==", email).get();
+        const userRef = firestore.collection("users").doc(uid);
+
+        await userRef.update({
+          premium: true,
+          subscriptionStatus: "active",
+          stripeCustomerId: customerId,
+        });
 
         if (!snapshot.empty) {
           const userDoc = snapshot.docs[0];
@@ -205,9 +211,20 @@ Situation: ${objet}`,
 
 app.post("/create-checkout-session", async (req, res) => {
   try {
+    const { uid, email } = req.body;
+
+    if (!uid || !email) {
+      return res.status(400).json({
+        error: "UID ou email manquant.",
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "subscription",
+
+      client_reference_id: uid,
+      customer_email: email,
 
       line_items: [
         {

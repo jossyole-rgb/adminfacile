@@ -532,11 +532,18 @@ window.passerPremium = async function () {
     }
 
     const response = await fetch(
-      "https://adminfacile.onrender.com/create-checkout-session",
-      {
-        method: "POST"
-      }
-    );
+  "https://adminfacile.onrender.com/create-checkout-session",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      uid: utilisateurConnecte.uid,
+      email: utilisateurConnecte.email
+    })
+  }
+);
 
     const data = await response.json();
 
