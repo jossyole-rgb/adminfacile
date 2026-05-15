@@ -531,6 +531,11 @@ window.passerPremium = async function () {
       return;
     }
 
+    if (utilisateurPremium) {
+      afficherNotification("Ton abonnement Premium est déjà actif.");
+      return;
+    }
+
     const response = await fetch(
   "https://adminfacile.onrender.com/create-checkout-session",
   {
