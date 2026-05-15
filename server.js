@@ -20,18 +20,14 @@ const admin = require("firebase-admin");
    INITIALISATION SERVICES
 ========================= */
 
-/* Express */
 const app = express();
 
-/* OpenAI */
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/* Stripe */
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-/* Firebase Admin */
 admin.initializeApp({
   credential: admin.credential.cert({
     projectId: process.env.FIREBASE_PROJECT_ID,
@@ -40,7 +36,6 @@ admin.initializeApp({
   }),
 });
 
-/* Firestore */
 const firestore = admin.firestore();
 
 
@@ -57,63 +52,90 @@ app.use(cors());
 ========================= */
 
 app.post(
-  "/stripe-webhook",
+  "/webhook",
   express.raw({ type: "application/json" }),
   async (req, res) => {
     const signature = req.headers["stripe-signature"];
 
+    let event;
+
     try {
-      const event = stripe.webhooks.constructEvent(
+      event = stripe.webhooks.constructEvent(
         req.body,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET
       );
+    } catch (error) {
+      console.error("Erreur webhook Stripe :", error.message);
+      return res.status(400).send(`Webhook Error: ${error.message}`);
+    }
 
+    try {
       if (event.type === "checkout.session.completed") {
         const session = event.data.object;
-        const email = session.customer_details.email;
+
+        const email = session.customer_details?.email;
         const customerId = session.customer;
 
-        if (!email) {
-          console.log("Aucun email trouvé dans la session Stripe.");
+        if (!email || !customerId) {
+          console.log("Email ou customerId manquant dans la session Stripe.");
           return res.json({ received: true });
         }
 
         const usersRef = firestore.collection("users");
-        const snapshot = await usersRef.where("Email", "==", email).get();
+        const snapshot = await usersRef.where("email", "==", email).get();
 
         if (!snapshot.empty) {
-          const updates = [];
+          const userDoc = snapshot.docs[0];
 
-          snapshot.forEach((document) => {
-            updates.push(
-              document.ref.update({
-                Premium: true,
-                customerId: customerId
-              })
-            );
+          await userDoc.ref.update({
+            premium: true,
+            subscriptionStatus: "active",
+            stripeCustomerId: customerId,
           });
 
-          await Promise.all(updates);
-
-          console.log(`Compte Premium activé pour : ${email}`);
+          console.log(`Premium activé pour : ${email}`);
         } else {
           await usersRef.add({
-            Email: email,
-            Premium: true,
-            customerId: customerId,
+            email,
+            premium: true,
+            subscriptionStatus: "active",
+            stripeCustomerId: customerId,
             createdAt: new Date().toISOString(),
           });
 
-          console.log(`Nouvel utilisateur Premium créé : ${email}`);
+          console.log(`Utilisateur Premium créé : ${email}`);
+        }
+      }
+
+      if (event.type === "customer.subscription.deleted") {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+
+        const usersRef = firestore.collection("users");
+        const snapshot = await usersRef
+          .where("stripeCustomerId", "==", customerId)
+          .get();
+
+        if (!snapshot.empty) {
+          const userDoc = snapshot.docs[0];
+
+          await userDoc.ref.update({
+            premium: false,
+            subscriptionStatus: "inactive",
+          });
+
+          console.log(`Premium désactivé pour customer : ${customerId}`);
         }
       }
 
       res.json({ received: true });
     } catch (error) {
-      console.error("Erreur webhook Stripe :", error.message);
+      console.error("Erreur traitement webhook :", error);
 
-      res.status(400).send(`Webhook Error: ${error.message}`);
+      res.status(500).json({
+        error: "Erreur lors du traitement du webhook Stripe.",
+      });
     }
   }
 );
@@ -219,33 +241,28 @@ app.post("/create-checkout-session", async (req, res) => {
 ========================= */
 
 app.post("/create-customer-portal-session", async (req, res) => {
-
   try {
-
     const { customerId } = req.body;
 
-    const session =
-      await stripe.billingPortal.sessions.create({
-
-        customer: customerId,
-
-        return_url:
-          "https://venerable-pixie-e9c9a9.netlify.app"
+    if (!customerId) {
+      return res.status(400).json({
+        error: "customerId manquant.",
       });
+    }
 
-    res.json({
-      url: session.url
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: "https://venerable-pixie-e9c9a9.netlify.app",
     });
 
+    res.json({
+      url: session.url,
+    });
   } catch (error) {
-
-    console.error(
-      "Erreur portail Stripe :",
-      error
-    );
+    console.error("Erreur portail Stripe :", error);
 
     res.status(500).json({
-      error: error.message
+      error: error.message,
     });
   }
 });
