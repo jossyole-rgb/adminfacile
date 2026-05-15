@@ -18,7 +18,9 @@ import {
   query,
   where,
   deleteDoc,
-  doc
+  doc,
+  getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -108,6 +110,16 @@ window.creerCompte = async function () {
       email,
       password
     );
+
+    const user = userCredential.user;
+
+    await setDoc(doc(db, "users", user.uid), {
+      email: user.email,
+      premium: false,
+      subscriptionStatus: "inactive",
+      stripeCustomerId: null,
+      createdAt: new Date()
+    });
 
     await sendEmailVerification(userCredential.user);
 
