@@ -476,6 +476,8 @@ async function mettreAJourDashboard() {
   const nombreLettres = document.getElementById("nombreLettres");
   const limiteGratuite = document.getElementById("limiteGratuite");
   const statutCompte = document.getElementById("statutCompte");
+  const btnPasserPremium = document.querySelector("button[onclick='passerPremium()']");
+
 
   if (!userEmail || !nombreLettres || !limiteGratuite || !statutCompte) return;
 
@@ -498,6 +500,10 @@ async function mettreAJourDashboard() {
   } else {
     statutCompte.innerHTML =
       "🆓 <span class='gratuit-badge'>Version gratuite</span>";
+  }
+
+  if (btnPasserPremium) {
+    btnPasserPremium.style.display = utilisateurPremium ? "none" : "block";
   }
 
   const q = query(
