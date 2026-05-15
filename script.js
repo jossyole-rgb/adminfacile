@@ -19,7 +19,6 @@ import {
   where,
   deleteDoc,
   doc,
-  getDoc,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -63,7 +62,6 @@ window.reinitialiserMotDePasse = async function () {
 
   try {
     await sendPasswordResetEmail(auth, email);
-
     afficherNotification("📩 Email de réinitialisation envoyé.");
   } catch (error) {
     console.error("Erreur reset password :", error);
@@ -121,7 +119,7 @@ window.creerCompte = async function () {
       createdAt: new Date()
     });
 
-    await sendEmailVerification(userCredential.user);
+    await sendEmailVerification(user);
 
     afficherNotification("📩 Compte créé. Email de vérification envoyé.");
   } catch (error) {
@@ -152,9 +150,7 @@ window.genererLettre = async function () {
   }
 
   if (!emailVerifie) {
-    resultat.innerText =
-      "Vérifie ton email avant de générer une lettre.";
-
+    resultat.innerText = "Vérifie ton email avant de générer une lettre.";
     afficherNotification("Email non vérifié.");
     return;
   }
@@ -224,7 +220,6 @@ window.genererLettre = async function () {
     afficherNotification("Lettre générée avec succès.");
   } catch (error) {
     console.error("Erreur génération :", error);
-
     resultat.innerText = "Erreur lors de la génération.";
     afficherNotification("Erreur lors de la génération.");
   } finally {
@@ -380,10 +375,7 @@ window.chargerHistorique = async function () {
       historique.innerHTML = `
         <div class="historique-vide">
           <h3>📭 Aucun historique</h3>
-
-          <p>
-            Vos lettres générées apparaîtront ici automatiquement.
-          </p>
+          <p>Vos lettres générées apparaîtront ici automatiquement.</p>
         </div>
       `;
 
@@ -395,7 +387,6 @@ window.chargerHistorique = async function () {
 
       historique.innerHTML += `
         <div class="lettre-card">
-
           <div class="lettre-header">
             <h3>${lettre.type}</h3>
 
@@ -408,9 +399,7 @@ window.chargerHistorique = async function () {
           </div>
 
           <small>${lettre.date}</small>
-
           <p>${lettre.contenu}</p>
-
         </div>
       `;
     });
@@ -418,7 +407,6 @@ window.chargerHistorique = async function () {
     afficherNotification("Historique chargé.");
   } catch (error) {
     console.error("Erreur historique :", error);
-
     historique.innerHTML = "Erreur lors du chargement de l’historique.";
     afficherNotification("Erreur lors du chargement.");
   }
@@ -451,14 +439,17 @@ window.supprimerLettre = async function (id) {
 async function verifierPremium(email) {
   try {
     const usersRef = collection(db, "users");
-    const q = query(usersRef, where("Email", "==", email));
+    const q = query(usersRef, where("email", "==", email));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
       const data = querySnapshot.docs[0].data();
 
-      utilisateurPremium = data.Premium === true;
-      stripeCustomerId = data.customerId || null;
+      utilisateurPremium =
+        data.premium === true &&
+        data.subscriptionStatus === "active";
+
+      stripeCustomerId = data.stripeCustomerId || null;
     } else {
       utilisateurPremium = false;
       stripeCustomerId = null;
@@ -480,6 +471,8 @@ async function mettreAJourDashboard() {
   const nombreLettres = document.getElementById("nombreLettres");
   const limiteGratuite = document.getElementById("limiteGratuite");
   const statutCompte = document.getElementById("statutCompte");
+
+  if (!userEmail || !nombreLettres || !limiteGratuite || !statutCompte) return;
 
   if (!utilisateurConnecte) {
     userEmail.innerText = "Non connecté";
@@ -647,9 +640,7 @@ window.changerTheme = function () {
   document.body.classList.toggle("dark-mode");
 
   const boutonTheme = document.getElementById("btnTheme");
-
-  const modeSombre =
-    document.body.classList.contains("dark-mode");
+  const modeSombre = document.body.classList.contains("dark-mode");
 
   if (modeSombre) {
     boutonTheme.innerText = "☀️ Mode clair";
