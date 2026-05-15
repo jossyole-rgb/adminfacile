@@ -6,7 +6,8 @@ import {
   db,
   auth,
   onAuthStateChanged,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from "./firebase.js";
 
 import {
@@ -35,14 +36,11 @@ let stripeCustomerId = null;
 ========================= */
 
 function afficherNotification(message) {
-
-  const notification =
-    document.getElementById("notification");
+  const notification = document.getElementById("notification");
 
   if (!notification) return;
 
   notification.innerText = message;
-
   notification.classList.add("show");
 
   setTimeout(() => {
@@ -55,30 +53,20 @@ function afficherNotification(message) {
    RESET PASSWORD
 ========================= */
 
-window.reinitialiserMotDePasse =
-  async function () {
+window.reinitialiserMotDePasse = async function () {
+  const email = prompt("Entrez votre email :");
 
-    const email =
-      prompt("Entrez votre email :");
+  if (!email) return;
 
-    if (!email) return;
+  try {
+    await sendPasswordResetEmail(auth, email);
 
-    try {
+    afficherNotification("📩 Email de réinitialisation envoyé.");
+  } catch (error) {
+    console.error("Erreur reset password :", error);
 
-      await sendPasswordResetEmail(auth, email);
-
-      afficherNotification(
-        "📩 Email de réinitialisation envoyé."
-      );
-
-    } catch (error) {
-
-      console.error(error);
-
-      afficherNotification(
-        "Erreur lors de l’envoi."
-      );
-    }
+    afficherNotification("Erreur lors de l’envoi.");
+  }
 };
 
 
@@ -87,7 +75,6 @@ window.reinitialiserMotDePasse =
 ========================= */
 
 onAuthStateChanged(auth, async (user) => {
-
   utilisateurConnecte = user;
 
   if (user) {
@@ -98,79 +85,79 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 
+window.creerCompte = async function () {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!email || !password) {
+    afficherNotification("Veuillez remplir l’email et le mot de passe.");
+    return;
+  }
+
+  try {
+    const userCredential = await auth.createUserWithEmailAndPassword(
+      email,
+      password
+    );
+
+    await sendEmailVerification(userCredential.user);
+
+    afficherNotification("📩 Compte créé. Email de vérification envoyé.");
+  } catch (error) {
+    console.error("Erreur création compte :", error);
+
+    afficherNotification("Erreur lors de la création du compte.");
+  }
+};
+
+
 /* =========================
    GÉNÉRATION DE LETTRE IA
 ========================= */
 
 window.genererLettre = async function () {
+  const type = document.getElementById("typeLettre").value;
+  const nom = document.getElementById("nom").value.trim();
+  const destinataire = document.getElementById("destinataire").value.trim();
+  const objet = document.getElementById("objet").value.trim();
 
-  const type =
-    document.getElementById("typeLettre").value;
-
-  const nom =
-    document.getElementById("nom").value.trim();
-
-  const destinataire =
-    document.getElementById("destinataire").value.trim();
-
-  const objet =
-    document.getElementById("objet").value.trim();
-
-  const resultat =
-    document.getElementById("resultat");
-
-  const bouton =
-    document.getElementById("btnGenerer");
-
-  const loader =
-    document.getElementById("loaderIA");
+  const resultat = document.getElementById("resultat");
+  const bouton = document.getElementById("btnGenerer");
+  const loader = document.getElementById("loaderIA");
 
   if (!utilisateurConnecte) {
+    resultat.innerText = "Connecte-toi avant de générer une lettre.";
+    afficherNotification("Connecte-toi avant de générer une lettre.");
+    return;
+  }
 
+  if (!utilisateurConnecte.emailVerified) {
     resultat.innerText =
-      "Connecte-toi avant de générer une lettre.";
+      "Vérifie ton email avant de générer une lettre.";
 
-    afficherNotification(
-      "Connecte-toi avant de générer une lettre."
-    );
-
+    afficherNotification("Vérifie ton email avant de générer une lettre.");
     return;
   }
 
   if (!nom || !destinataire || !objet) {
+    resultat.innerText = "Veuillez remplir tous les champs.";
 
-    resultat.innerText =
-      "Veuillez remplir tous les champs.";
-
-    afficherNotification(
-      "Veuillez remplir tous les champs."
-    );
-
+    afficherNotification("Veuillez remplir tous les champs.");
     return;
   }
 
   try {
-
     const q = query(
       collection(db, "lettres"),
       where("userId", "==", utilisateurConnecte.uid)
     );
 
-    const querySnapshot =
-      await getDocs(q);
+    const querySnapshot = await getDocs(q);
 
-    if (
-      !utilisateurPremium &&
-      querySnapshot.size >= 3
-    ) {
+    if (!utilisateurPremium && querySnapshot.size >= 3) {
+      resultat.innerText = "Limite gratuite atteinte.";
 
-      resultat.innerText =
-        "Limite gratuite atteinte.";
-
-      afficherNotification(
-        "Limite gratuite atteinte."
-      );
-
+      afficherNotification("Limite gratuite atteinte.");
       return;
     }
 
@@ -179,8 +166,7 @@ window.genererLettre = async function () {
 
     loader.style.display = "block";
 
-    resultat.innerText =
-      "L’IA rédige votre lettre...";
+    resultat.innerText = "L’IA rédige votre lettre...";
 
     desactiverFormulaire(true);
 
@@ -200,17 +186,13 @@ window.genererLettre = async function () {
       }
     );
 
-    const data =
-      await reponse.json();
+    const data = await reponse.json();
 
     if (!data.lettre) {
-      throw new Error(
-        "Aucune lettre reçue."
-      );
+      throw new Error("Aucune lettre reçue.");
     }
 
-    resultat.innerText =
-      data.lettre;
+    resultat.innerText = data.lettre;
 
     activerBoutonsLettre(true);
 
@@ -223,29 +205,19 @@ window.genererLettre = async function () {
 
     await mettreAJourDashboard();
 
-    afficherNotification(
-      "Lettre générée avec succès."
-    );
-
+    afficherNotification("Lettre générée avec succès.");
   } catch (error) {
+    console.error("Erreur génération :", error);
 
-    console.error(error);
+    resultat.innerText = "Erreur lors de la génération.";
 
-    resultat.innerText =
-      "Erreur lors de la génération.";
-
-    afficherNotification(
-      "Erreur lors de la génération."
-    );
-
+    afficherNotification("Erreur lors de la génération.");
   } finally {
-
     loader.style.display = "none";
 
     bouton.disabled = false;
 
-    bouton.innerText =
-      "Générer ma lettre";
+    bouton.innerText = "Générer ma lettre";
 
     desactiverFormulaire(false);
   }
