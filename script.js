@@ -82,7 +82,7 @@ onAuthStateChanged(auth, async (user) => {
 
     emailVerifie = user.emailVerified;
 
-    await verifierPremium(user.email);
+    await verifierPremium(user.uid);
   } else {
     emailVerifie = false;
     utilisateurPremium = false;
@@ -436,26 +436,30 @@ window.supprimerLettre = async function (id) {
    STATUT PREMIUM
 ========================= */
 
-async function verifierPremium(email) {
+async function verifierPremium(uid) {
   try {
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("email", "==", email));
-    const querySnapshot = await getDocs(q);
+    const userRef = doc(db, "users", uid);
 
-    if (!querySnapshot.empty) {
-      const data = querySnapshot.docs[0].data();
+    const userSnap = await getDoc(userRef);
 
-      utilisateurPremium =
-        data.premium === true &&
-        data.subscriptionStatus === "active";
-
-      stripeCustomerId = data.stripeCustomerId || null;
-    } else {
+    if (!userSnap.exists()) {
       utilisateurPremium = false;
       stripeCustomerId = null;
+      return;
     }
+
+    const data = userSnap.data();
+
+    utilisateurPremium =
+      data.premium === true &&
+      data.subscriptionStatus === "active";
+
+    stripeCustomerId =
+      data.stripeCustomerId || null;
+
   } catch (error) {
     console.error("Erreur Premium :", error);
+
     utilisateurPremium = false;
     stripeCustomerId = null;
   }
