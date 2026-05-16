@@ -150,6 +150,7 @@
     </div>
 
     <!-- Assistant administratif conversationnel -->
+
     <section class="chat-box">
       <h2>🤖 Assistant administratif IA</h2>
 
@@ -163,6 +164,30 @@
       <button onclick="envoyerMessageIA()">
         Envoyer
       </button>
+    </section>
+
+    <!-- Upload de justificatif -->
+     
+    <section class="upload-box">
+      <h2>📎 Analyse de document administratif</h2>
+
+        <p>
+          Ajoute un justificatif, un courrier ou un document administratif à analyser.
+        </p>
+
+        <input
+          type="file"
+          id="documentUpload"
+          accept=".pdf,.png,.jpg,.jpeg"
+        />
+
+      <button onclick="analyserDocument()">
+        🔍 Analyser le document
+      </button>
+
+      <div id="analyseDocumentResultat" class="resultat">
+        L’analyse du document apparaîtra ici.
+      </div>
     </section>
   </main>
 

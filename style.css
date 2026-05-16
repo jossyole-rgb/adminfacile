@@ -665,3 +665,44 @@ select:disabled {
   min-height: 100px;
   resize: vertical;
 }
+
+
+/* =========================
+   UPLOAD DOCUMENTS IA
+========================= */
+
+.upload-box {
+  margin-top: 40px;
+  padding: 25px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.upload-box h2 {
+  color: #1f4ed8;
+  margin-bottom: 12px;
+}
+
+.upload-box input[type="file"] {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  background: #f9fafb;
+  border: 2px dashed #cbd5e1;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.upload-box input[type="file"]:hover {
+  border-color: #1f4ed8;
+}
+
+.dark-mode .upload-box {
+  background: #1e293b;
+}
+
+.dark-mode .upload-box input[type="file"] {
+  background: #334155;
+  border-color: #475569;
+  color: white;
+}

@@ -930,3 +930,35 @@ window.envoyerMessageIA = async function () {
     );
   }
 };
+
+
+/* =========================
+   ANALYSE DOCUMENT ADMINISTRATIF
+========================= */
+
+window.analyserDocument = async function () {
+  const input = document.getElementById("documentUpload");
+  const resultat = document.getElementById("analyseDocumentResultat");
+
+  if (!input.files || input.files.length === 0) {
+    afficherNotification("Ajoute un document à analyser.");
+    return;
+  }
+
+  const fichier = input.files[0];
+
+  resultat.innerText = "Analyse du document en cours...";
+
+  // Version 1 : on confirme seulement l’upload côté interface.
+  // L’analyse réelle PDF/image viendra à l’étape suivante.
+  resultat.innerText = `
+Document reçu : ${fichier.name}
+
+Type : ${fichier.type || "Type inconnu"}
+Taille : ${(fichier.size / 1024).toFixed(1)} Ko
+
+Prochaine étape : analyse IA du contenu du document.
+  `;
+
+  afficherNotification("Document prêt pour analyse.");
+};
