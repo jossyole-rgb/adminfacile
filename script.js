@@ -949,16 +949,34 @@ window.analyserDocument = async function () {
 
   resultat.innerText = "Analyse du document en cours...";
 
-  // Version 1 : on confirme seulement l’upload côté interface.
-  // L’analyse réelle PDF/image viendra à l’étape suivante.
-  resultat.innerText = `
-Document reçu : ${fichier.name}
+const formData = new FormData();
+formData.append("document", fichier);
 
-Type : ${fichier.type || "Type inconnu"}
-Taille : ${(fichier.size / 1024).toFixed(1)} Ko
+const response = await fetch(
+  "https://adminfacile.onrender.com/upload-document",
+  {
+    method: "POST",
+    body: formData,
+  }
+);
 
-Prochaine étape : analyse IA du contenu du document.
-  `;
+const data = await response.json();
 
-  afficherNotification("Document prêt pour analyse.");
+if (!response.ok) {
+  throw new Error(data.error || "Erreur upload");
+}
+
+resultat.innerText = `
+📄 Document reçu avec succès
+
+Nom : ${data.nom}
+
+Type : ${data.type}
+
+Taille : ${(data.taille / 1024).toFixed(1)} Ko
+
+✅ Le document est prêt pour analyse IA.
+`;
+
+afficherNotification("Document envoyé au serveur.");
 };

@@ -11,6 +11,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const multer = require("multer");
 const OpenAI = require("openai");
 const Stripe = require("stripe");
 const admin = require("firebase-admin");
@@ -21,6 +22,17 @@ const admin = require("firebase-admin");
 ========================= */
 
 const app = express();
+
+/* =========================
+   CONFIGURATION UPLOAD
+========================= */
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -371,6 +383,38 @@ app.post("/chat-admin", async (req, res) => {
     });
   }
 });
+
+
+/* =========================
+   UPLOAD DOCUMENT ADMINISTRATIF
+========================= */
+
+app.post(
+  "/upload-document",
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error: "Aucun document reçu.",
+        });
+      }
+
+      res.json({
+        success: true,
+        nom: req.file.originalname,
+        type: req.file.mimetype,
+        taille: req.file.size,
+      });
+    } catch (error) {
+      console.error("Erreur upload document :", error);
+
+      res.status(500).json({
+        error: "Erreur lors de l'upload du document.",
+      });
+    }
+  }
+);
 
 
 /* =========================
