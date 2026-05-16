@@ -32,6 +32,8 @@ let utilisateurConnecte = null;
 let utilisateurPremium = false;
 let stripeCustomerId = null;
 let emailVerifie = false;
+let nombreMessagesIA = 0;
+const LIMITE_MESSAGES_IA = 5;
 
 
 /* =========================
@@ -764,6 +766,18 @@ window.envoyerMessageIA = async function () {
     return;
   }
 
+  if (
+    !utilisateurPremium &&
+    nombreMessagesIA >= LIMITE_MESSAGES_IA
+  ) {
+
+    afficherNotification(
+      "Limite gratuite IA atteinte."
+    );
+
+    return;
+  }
+
   /* Message utilisateur */
 
   messages.innerHTML += `
@@ -793,6 +807,8 @@ window.envoyerMessageIA = async function () {
 
     const data =
       await response.json();
+
+      nombreMessagesIA++;
 
     /* Réponse IA */
 
