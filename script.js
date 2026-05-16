@@ -353,7 +353,7 @@ window.telechargerPDF = function () {
 window.telechargerDOCX = async function () {
 
   const { Document, Packer, Paragraph, TextRun } = window.docx;
-  
+
   const texte = document.getElementById("resultat").innerText;
 
   if (texteResultatEstVide(texte)) {
@@ -738,3 +738,82 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
+
+
+/* =========================
+   ASSISTANT ADMINISTRATIF IA
+========================= */
+
+window.envoyerMessageIA = async function () {
+
+  const input =
+    document.getElementById("chatInput");
+
+  const messages =
+    document.getElementById("chatMessages");
+
+  const question =
+    input.value.trim();
+
+  if (!question) {
+
+    afficherNotification(
+      "Écris une question."
+    );
+
+    return;
+  }
+
+  /* Message utilisateur */
+
+  messages.innerHTML += `
+    <div class="message-user">
+      ${question}
+    </div>
+  `;
+
+  input.value = "";
+
+  try {
+
+    const response = await fetch(
+      "https://adminfacile.onrender.com/chat-admin",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          message: question
+        })
+      }
+    );
+
+    const data =
+      await response.json();
+
+    /* Réponse IA */
+
+    messages.innerHTML += `
+      <div class="message-ia">
+        ${data.reponse}
+      </div>
+    `;
+
+    messages.scrollTop =
+      messages.scrollHeight;
+
+  } catch (error) {
+
+    console.error(
+      "Erreur assistant IA :",
+      error
+    );
+
+    afficherNotification(
+      "Erreur assistant IA."
+    );
+  }
+};

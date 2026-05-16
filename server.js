@@ -219,6 +219,51 @@ app.post("/generer-lettre", async (req, res) => {
 
 
 /* =========================
+   ASSISTANT ADMINISTRATIF IA
+========================= */
+
+app.post("/chat-admin", async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        error: "Message requis.",
+      });
+    }
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+
+      messages: [
+        {
+          role: "system",
+          content:
+            "Tu es un assistant administratif français expert. Tu aides les utilisateurs avec leurs démarches administratives françaises. Tu réponds de manière claire, professionnelle, pratique et humaine. Tu ne remplaces pas un avocat, mais tu expliques les démarches possibles et tu peux aider à rédiger des courriers.",
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
+
+    const reponse = response.choices[0].message.content;
+
+    res.json({
+      reponse,
+    });
+  } catch (error) {
+    console.error("Erreur assistant IA :", error);
+
+    res.status(500).json({
+      error: "Erreur assistant IA.",
+    });
+  }
+});
+
+
+/* =========================
    CRÉATION SESSION STRIPE CHECKOUT
 ========================= */
 
