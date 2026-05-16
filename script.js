@@ -442,6 +442,58 @@ window.resumerLettre = async function () {
 
 
 /* =========================
+   RÉÉCRITURE IA
+========================= */
+
+window.reecrireLettre = async function (style) {
+
+  const resultat = document.getElementById("resultat");
+  const texte = resultat.innerText;
+
+  if (texteResultatEstVide(texte)) {
+    afficherNotification("Aucune lettre à réécrire.");
+    return;
+  }
+
+  try {
+
+    resultat.innerText = "L’IA réécrit votre lettre...";
+
+    const response = await fetch(
+      "https://adminfacile.onrender.com/reecrire-lettre",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          texte,
+          style
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!data.lettre) {
+      throw new Error("Aucune réécriture reçue.");
+    }
+
+    resultat.innerText = data.lettre;
+
+    afficherNotification("Lettre réécrite.");
+    
+  } catch (error) {
+
+    console.error("Erreur réécriture IA :", error);
+
+    afficherNotification("Erreur lors de la réécriture.");
+  }
+};
+
+
+/* =========================
    HISTORIQUE DES LETTRES
 ========================= */
 

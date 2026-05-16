@@ -264,6 +264,71 @@ app.post("/resumer-lettre", async (req, res) => {
 
 
 /* =========================
+   RÉÉCRITURE IA
+========================= */
+
+app.post("/reecrire-lettre", async (req, res) => {
+  try {
+    const { texte, style } = req.body;
+
+    if (!texte || !style) {
+      return res.status(400).json({
+        error: "Texte et style requis.",
+      });
+    }
+
+    const instructions = {
+      professionnel:
+        "Réécris cette lettre avec un ton plus professionnel, clair et crédible.",
+      juridique:
+        "Réécris cette lettre avec un ton plus juridique, formel et structuré.",
+      poli:
+        "Réécris cette lettre avec un ton plus poli, courtois et respectueux.",
+      ferme:
+        "Réécris cette lettre avec un ton plus ferme, direct et assertif, sans être agressif.",
+      court:
+        "Raccourcis cette lettre en gardant les informations essentielles.",
+    };
+
+    const instruction =
+      instructions[style] || instructions.professionnel;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+
+      messages: [
+        {
+          role: "system",
+          content:
+            "Tu es un assistant administratif français expert. Tu réécris des lettres administratives en améliorant leur style, leur clarté et leur crédibilité.",
+        },
+        {
+          role: "user",
+          content: `${instruction}
+
+Lettre à réécrire :
+
+${texte}`,
+        },
+      ],
+    });
+
+    const lettre = response.choices[0].message.content;
+
+    res.json({
+      lettre,
+    });
+  } catch (error) {
+    console.error("Erreur réécriture IA :", error);
+
+    res.status(500).json({
+      error: "Erreur lors de la réécriture de la lettre.",
+    });
+  }
+});
+
+
+/* =========================
    ASSISTANT ADMINISTRATIF IA
 ========================= */
 
