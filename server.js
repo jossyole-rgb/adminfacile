@@ -219,6 +219,51 @@ app.post("/generer-lettre", async (req, res) => {
 
 
 /* =========================
+   RÉSUMÉ IA DE LA LETTRE
+========================= */
+
+app.post("/resumer-lettre", async (req, res) => {
+  try {
+    const { texte } = req.body;
+
+    if (!texte) {
+      return res.status(400).json({
+        error: "Texte requis.",
+      });
+    }
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+
+      messages: [
+        {
+          role: "system",
+          content:
+            "Tu es un assistant administratif français. Tu résumes les lettres administratives de manière claire, concise et professionnelle.",
+        },
+        {
+          role: "user",
+          content: `Résume cette lettre administrative en 5 à 8 lignes maximum :\n\n${texte}`,
+        },
+      ],
+    });
+
+    const resume = response.choices[0].message.content;
+
+    res.json({
+      resume,
+    });
+  } catch (error) {
+    console.error("Erreur résumé IA :", error);
+
+    res.status(500).json({
+      error: "Erreur lors du résumé de la lettre.",
+    });
+  }
+});
+
+
+/* =========================
    ASSISTANT ADMINISTRATIF IA
 ========================= */
 

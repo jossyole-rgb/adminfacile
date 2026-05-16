@@ -397,6 +397,51 @@ window.telechargerDOCX = async function () {
 
 
 /* =========================
+   RÉSUMÉ IA DE LA LETTRE
+========================= */
+
+window.resumerLettre = async function () {
+  const texte = document.getElementById("resultat").innerText;
+  const resultat = document.getElementById("resultat");
+
+  if (texteResultatEstVide(texte)) {
+    afficherNotification("Génère une lettre avant de la résumer.");
+    return;
+  }
+
+  try {
+    resultat.innerText = "L’IA résume votre lettre...";
+
+    const response = await fetch(
+      "https://adminfacile.onrender.com/resumer-lettre",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          texte
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!data.resume) {
+      throw new Error("Aucun résumé reçu.");
+    }
+
+    resultat.innerText = data.resume;
+
+    afficherNotification("Résumé généré.");
+  } catch (error) {
+    console.error("Erreur résumé IA :", error);
+    afficherNotification("Erreur lors du résumé.");
+  }
+};
+
+
+/* =========================
    HISTORIQUE DES LETTRES
 ========================= */
 
