@@ -3,15 +3,6 @@
 ========================= */
 
 import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun
-} from "docx";
-
-import { saveAs } from "file-saver";
-
-import {
   db,
   auth,
   onAuthStateChanged,
@@ -360,6 +351,9 @@ window.telechargerPDF = function () {
 
 
 window.telechargerDOCX = async function () {
+
+  const { Document, Packer, Paragraph, TextRun } = window.docx;
+  
   const texte = document.getElementById("resultat").innerText;
 
   if (texteResultatEstVide(texte)) {
