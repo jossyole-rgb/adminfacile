@@ -136,6 +136,7 @@ window.creerCompte = async function () {
 
 window.genererLettre = async function () {
   const type = document.getElementById("typeLettre").value;
+  const tonLettre = document.getElementById("tonLettre").value;
   const nom = document.getElementById("nom").value.trim();
   const destinataire = document.getElementById("destinataire").value.trim();
   const objet = document.getElementById("objet").value.trim();
@@ -192,6 +193,7 @@ window.genererLettre = async function () {
         },
         body: JSON.stringify({
           type,
+          tonLettre,
           nom,
           destinataire,
           objet

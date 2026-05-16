@@ -166,9 +166,9 @@ app.get("/", (req, res) => {
 
 app.post("/generer-lettre", async (req, res) => {
   try {
-    const { type, nom, destinataire, objet } = req.body;
+    const { type, tonLettre, nom, destinataire, objet } = req.body;
 
-    if (!type || !nom || !destinataire || !objet) {
+    if (!type || !tonLettre || !nom || !destinataire || !objet) {
       return res.status(400).json({
         error: "Tous les champs sont obligatoires.",
       });
@@ -184,10 +184,13 @@ app.post("/generer-lettre", async (req, res) => {
         },
         {
           role: "user",
-          content: `Rédige une lettre administrative de type ${type}.
-Nom: ${nom}
-Destinataire: ${destinataire}
-Situation: ${objet}`,
+          content: `Rédige une lettre administrative de type ${type}
+
+          Le ton de la lettre doit être : ${tonLettre}.
+
+          Nom: ${nom}
+          Destinataire: ${destinataire}
+          Situation: ${objet}`,
         },
       ],
     });
