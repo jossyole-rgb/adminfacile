@@ -178,6 +178,11 @@ button:disabled {
 
   text-align: center;
   line-height: 1.3;
+
+  height: 78px;
+
+  padding: 12px;
+  word-break: break-word;
 }
 
 /* RÉSULTAT */
