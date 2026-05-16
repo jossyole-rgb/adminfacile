@@ -3,6 +3,15 @@
 ========================= */
 
 import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun
+} from "docx";
+
+import { saveAs } from "file-saver";
+
+import {
   db,
   auth,
   onAuthStateChanged,
@@ -251,6 +260,7 @@ function activerBoutonsLettre(etat) {
   document.getElementById("btnCopier").disabled = !etat;
   document.getElementById("btnTelecharger").disabled = !etat;
   document.getElementById("btnPDF").disabled = !etat;
+  document.getElementById("btnDOCX").disabled = !etat;
 }
 
 
@@ -346,6 +356,47 @@ window.telechargerPDF = function () {
   doc.save("lettre_adminfacile.pdf");
 
   afficherNotification("PDF téléchargé.");
+};
+
+
+window.telechargerDOCX = async function () {
+  const texte = document.getElementById("resultat").innerText;
+
+  if (texteResultatEstVide(texte)) {
+    afficherNotification("Génère une lettre avant le DOCX.");
+    return;
+  }
+
+  const lignes = texte
+    .split("\n")
+    .filter((ligne) => ligne.trim() !== "");
+
+  const documentWord = new Document({
+    sections: [
+      {
+        children: lignes.map(
+          (ligne) =>
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: ligne,
+                  size: 24
+                })
+              ],
+              spacing: {
+                after: 200
+              }
+            })
+        )
+      }
+    ]
+  });
+
+  const blob = await Packer.toBlob(documentWord);
+
+  saveAs(blob, "lettre_adminfacile.docx");
+
+  afficherNotification("DOCX téléchargé.");
 };
 
 
