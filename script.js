@@ -1050,5 +1050,24 @@ resultat.innerHTML = `
   </div>
 `;
 
+if (utilisateurConnecte) {
+  await addDoc(collection(db, "analyses"), {
+    userId: utilisateurConnecte.uid,
+    email: utilisateurConnecte.email,
+    nom: data.nom,
+    type: data.type,
+    taille: data.taille,
+    typeDocument,
+    organisme,
+    dateImportante,
+    montant,
+    urgence,
+    actions,
+    resume,
+    analyseComplete: analyse,
+    createdAt: new Date()
+  });
+}
+
 afficherNotification("Document envoyé au serveur.");
 };
