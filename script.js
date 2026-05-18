@@ -975,9 +975,13 @@ resultat.innerHTML = `
 
 <hr>
 
-<pre style="white-space: pre-wrap; font-family: inherit;">
-${data.analyse}
-</pre>
+<div class="analyse-ia">
+${data.analyse
+  .replace(/\n/g, "<br>")
+  .replace(/### (.*?)(<br>|$)/g, "<h3>$1</h3>")
+  .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+}
+</div>
 `;
 
 afficherNotification("Document envoyé au serveur.");
