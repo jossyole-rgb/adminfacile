@@ -966,16 +966,18 @@ if (!response.ok) {
   throw new Error(data.error || "Erreur upload");
 }
 
-resultat.innerText = `
-📄 Document reçu avec succès
+resultat.innerHTML = `
+<h3>📄 Analyse du document</h3>
 
-Nom : ${data.nom}
+<p><strong>Nom :</strong> ${data.nom}</p>
 
-Type : ${data.type}
+<p><strong>Type :</strong> ${data.type}</p>
 
-Taille : ${(data.taille / 1024).toFixed(1)} Ko
+<hr>
 
-✅ Le document est prêt pour analyse IA.
+<pre style="white-space: pre-wrap; font-family: inherit;">
+${data.analyse}
+</pre>
 `;
 
 afficherNotification("Document envoyé au serveur.");

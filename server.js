@@ -417,13 +417,47 @@ app.post(
 
       console.log("PDF analysé avec succès");
 
-          res.json({
-        success: true,
-        nom: req.file.originalname,
-        type: req.file.mimetype,
-        taille: req.file.size,
-        texte: texteExtrait,
-      });
+          let analyseIA = "Aucune analyse disponible.";
+
+if (texteExtrait.trim()) {
+  const completion = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "Tu es un assistant administratif français expert. Analyse les documents administratifs de manière claire, professionnelle et utile.",
+      },
+      {
+        role: "user",
+        content: `
+Analyse ce document administratif.
+
+Donne :
+- le type de document
+- un résumé clair
+- les points importants
+- les éventuels problèmes
+- les documents potentiellement nécessaires
+- des conseils administratifs utiles
+
+Document :
+${texteExtrait}
+        `,
+      },
+    ],
+  });
+
+  analyseIA = completion.choices[0].message.content;
+}
+
+res.json({
+  success: true,
+  nom: req.file.originalname,
+  type: req.file.mimetype,
+  taille: req.file.size,
+  analyse: analyseIA,
+});
     } catch (error) {
       console.error("Erreur upload document :", error);
 
