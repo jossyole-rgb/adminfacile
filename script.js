@@ -936,6 +936,16 @@ window.envoyerMessageIA = async function () {
    ANALYSE DOCUMENT ADMINISTRATIF
 ========================= */
 
+function extraireChampAnalyse(texte, champ) {
+  const regex = new RegExp(
+    `${champ}:\\s*([\\s\\S]*?)(?=\\n[A-Z_]+:|$)`
+  );
+
+  const match = texte.match(regex);
+
+  return match ? match[1].trim() : "Non détecté";
+}
+
 window.analyserDocument = async function () {
   const input = document.getElementById("documentUpload");
   const resultat = document.getElementById("analyseDocumentResultat");
@@ -966,23 +976,68 @@ if (!response.ok) {
   throw new Error(data.error || "Erreur upload");
 }
 
+const analyse = data.analyse || "";
+
+const typeDocument =
+  extraireChampAnalyse(analyse, "TYPE_DOCUMENT");
+
+const organisme =
+  extraireChampAnalyse(analyse, "ORGANISME");
+
+const dateImportante =
+  extraireChampAnalyse(analyse, "DATE_IMPORTANTE");
+
+const montant =
+  extraireChampAnalyse(analyse, "MONTANT");
+
+const urgence =
+  extraireChampAnalyse(analyse, "URGENCE");
+
+const actions =
+  extraireChampAnalyse(analyse, "ACTIONS_RECOMMANDEES");
+
+const resume =
+  extraireChampAnalyse(analyse, "RESUME");
+
 resultat.innerHTML = `
-<h3>📄 Analyse du document</h3>
+  <h3>📄 Analyse du document</h3>
 
-<p><strong>Nom :</strong> ${data.nom}</p>
+  <div class="analyse-cards">
+    <div class="analyse-card">
+      <span>📄 Type</span>
+      <strong>${typeDocument}</strong>
+    </div>
 
-<p><strong>Type :</strong> ${data.type}</p>
+    <div class="analyse-card">
+      <span>🏢 Organisme</span>
+      <strong>${organisme}</strong>
+    </div>
 
-<hr>
+    <div class="analyse-card">
+      <span>📅 Date</span>
+      <strong>${dateImportante}</strong>
+    </div>
 
-<div class="analyse-ia">
-${data.analyse
-  .replace(/^#$/gm, "")
-  .replace(/\n/g, "<br>")
-  .replace(/### (.*?)(<br>|$)/g, "<h3>$1</h3>")
-  .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-}
-</div>
+    <div class="analyse-card">
+      <span>💰 Montant</span>
+      <strong>${montant}</strong>
+    </div>
+
+    <div class="analyse-card urgence-card">
+      <span>⚠️ Urgence</span>
+      <strong>${urgence}</strong>
+    </div>
+  </div>
+
+  <div class="analyse-section">
+    <h4>✅ Actions recommandées</h4>
+    <p>${actions.replace(/\n/g, "<br>")}</p>
+  </div>
+
+  <div class="analyse-section">
+    <h4>🧠 Résumé</h4>
+    <p>${resume.replace(/\n/g, "<br>")}</p>
+  </div>
 `;
 
 afficherNotification("Document envoyé au serveur.");

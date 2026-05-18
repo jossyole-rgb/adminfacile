@@ -724,3 +724,59 @@ select:disabled {
 .analyse-ia strong {
   color: #111827;
 }
+
+
+/* =========================
+   CARTES ANALYSE IA
+========================= */
+
+.analyse-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.analyse-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 5px solid #1f4ed8;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.analyse-card span {
+  display: block;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.analyse-card strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.urgence-card {
+  border-left-color: #f59e0b;
+}
+
+.analyse-section {
+  margin-top: 22px;
+  padding: 18px;
+  background: #f9fafb;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.analyse-section h4 {
+  margin-top: 0;
+  color: #1f4ed8;
+}
+
+.analyse-section p {
+  line-height: 1.7;
+  color: #1f2937;
+}
