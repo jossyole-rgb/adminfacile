@@ -1238,8 +1238,11 @@ window.voirAnalyse = function (id) {
   });
 
   modal.style.display = "flex";
+  document.body.classList.add("modal-open");
 };
 
 window.fermerAnalyseModal = function () {
   document.getElementById("analyseModal").style.display = "none";
+  
+  document.body.classList.remove("modal-open");
 };

@@ -875,3 +875,7 @@ select:disabled {
     opacity: 1;
   }
 }
+
+body.modal-open {
+  overflow: hidden;
+}
