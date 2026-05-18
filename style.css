@@ -763,6 +763,18 @@ select:disabled {
   border-left-color: #f59e0b;
 }
 
+.urgence-faible {
+  border-left-color: #10b981;
+}
+
+.urgence-moyenne {
+  border-left-color: #f59e0b;
+}
+
+.urgence-elevee {
+  border-left-color: #ef4444;
+}
+
 .analyse-section {
   margin-top: 22px;
   padding: 18px;

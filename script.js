@@ -999,6 +999,16 @@ const actions =
 const resume =
   extraireChampAnalyse(analyse, "RESUME");
 
+  let urgenceClass = "urgence-moyenne";
+
+if (urgence.toLowerCase().includes("faible")) {
+  urgenceClass = "urgence-faible";
+}
+
+if (urgence.toLowerCase().includes("élevée")) {
+  urgenceClass = "urgence-elevee";
+}
+
 resultat.innerHTML = `
   <h3>📄 Analyse du document</h3>
 
@@ -1023,7 +1033,7 @@ resultat.innerHTML = `
       <strong>${montant}</strong>
     </div>
 
-    <div class="analyse-card urgence-card">
+    <div class="analyse-card ${urgenceClass}">
       <span>⚠️ Urgence</span>
       <strong>${urgence}</strong>
     </div>
