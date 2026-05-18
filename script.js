@@ -1211,3 +1211,35 @@ ${data.resume || "Aucun résumé"}
     afficherNotification("Erreur ouverture analyse.");
   }
 };
+
+
+window.voirAnalyse = function (id) {
+  const modal = document.getElementById("analyseModal");
+  const content = document.getElementById("analyseModalContent");
+
+  const cartes = document.querySelectorAll(".analyse-card");
+
+  cartes.forEach((carte) => {
+    const bouton = carte.querySelector("button");
+
+    if (
+      bouton &&
+      bouton.getAttribute("onclick") === `voirAnalyse('${id}')`
+    ) {
+      const texte = carte.innerHTML;
+
+      content.innerHTML = `
+        <h2>📄 Analyse complète</h2>
+        <div style="margin-top:20px;">
+          ${texte}
+        </div>
+      `;
+    }
+  });
+
+  modal.style.display = "flex";
+};
+
+window.fermerAnalyseModal = function () {
+  document.getElementById("analyseModal").style.display = "none";
+};
