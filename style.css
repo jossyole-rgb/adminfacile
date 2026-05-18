@@ -834,7 +834,9 @@ select:disabled {
   max-width: 700px;
 
   max-height: 85vh;
-  overflow-y: auto;
+  overflow-y: scroll;
+
+  padding-right: 10px;
 
   border-radius: 20px;
   padding: 30px;
