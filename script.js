@@ -1178,3 +1178,36 @@ window.supprimerAnalyse = async function (id) {
     );
   }
 };
+
+
+window.voirAnalyse = async function (id) {
+  try {
+    const analyseRef = doc(db, "analyses", id);
+    const analyseSnap = await getDoc(analyseRef);
+
+    if (!analyseSnap.exists()) {
+      afficherNotification("Analyse introuvable.");
+      return;
+    }
+
+    const data = analyseSnap.data();
+
+    alert(`
+📄 ${data.typeDocument || "Document"}
+
+Organisme : ${data.organisme || "Non détecté"}
+Date : ${data.dateImportante || "Non détectée"}
+Montant : ${data.montant || "Non détecté"}
+Urgence : ${data.urgence || "Non détectée"}
+
+Actions :
+${data.actions || "Aucune action"}
+
+Résumé :
+${data.resume || "Aucun résumé"}
+    `);
+  } catch (error) {
+    console.error(error);
+    afficherNotification("Erreur ouverture analyse.");
+  }
+};
