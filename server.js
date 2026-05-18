@@ -430,23 +430,42 @@ if (texteExtrait.trim()) {
       },
       {
         role: "user",
-        content: `
-Analyse ce document administratif.
+        content: ` 
+      Analyse ce document administratif français.
 
-Donne :
-- le type de document
-- un résumé clair
-- les points importants
-- les éventuels problèmes
-- les documents potentiellement nécessaires
-- des conseils administratifs utiles
+      Réponds STRICTEMENT avec cette structure :
 
-Document :
-${texteExtrait}
-        `,
-      },
-    ],
-  });
+      TYPE_DOCUMENT:
+      (type du document)
+
+      ORGANISME:
+      (nom de l'organisme)
+
+      DATE_IMPORTANTE:
+      (date importante)
+
+      MONTANT:
+      (montant si présent)
+
+      URGENCE:
+      (faible, moyenne ou élevée)
+
+      ACTIONS_RECOMMANDEES:
+      - action 1
+      - action 2
+      - action 3
+
+      RESUME:
+      (résumé clair et professionnel)
+
+      DOCUMENT:
+      ${texteExtrait}
+      `,
+    },
+  ],
+});
+      
+
 
   analyseIA = completion.choices[0].message.content;
 }
