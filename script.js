@@ -977,6 +977,7 @@ resultat.innerHTML = `
 
 <div class="analyse-ia">
 ${data.analyse
+  .replace(/^#$/gm, "")
   .replace(/\n/g, "<br>")
   .replace(/### (.*?)(<br>|$)/g, "<h3>$1</h3>")
   .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
