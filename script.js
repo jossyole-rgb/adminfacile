@@ -1050,6 +1050,9 @@ resultat.innerHTML = `
   </div>
 `;
 
+    console.log("Utilisateur connecté :", utilisateurConnecte);
+    console.log("Sauvegarde analyse Firestore...");
+
 if (utilisateurConnecte) {
   await addDoc(collection(db, "analyses"), {
     userId: utilisateurConnecte.uid,
@@ -1067,7 +1070,77 @@ if (utilisateurConnecte) {
     analyseComplete: analyse,
     createdAt: new Date()
   });
+
+  console.log("Analyse sauvegardée !");
 }
 
 afficherNotification("Document envoyé au serveur.");
 };
+
+
+async function chargerAnalyses() {
+  const container = document.getElementById("listeAnalyses");
+
+  container.innerHTML = "<p>Chargement...</p>";
+
+  try {
+    if (!utilisateurConnecte) {
+      container.innerHTML =
+        "<p>Utilisateur non connecté.</p>";
+      return;
+    }
+
+    const q = query(
+      collection(db, "analyses"),
+      where("userId", "==", utilisateurConnecte.uid)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      container.innerHTML =
+        "<p>Aucune analyse sauvegardée.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+
+      const carte = document.createElement("div");
+
+      carte.className = "analyse-card";
+
+      carte.innerHTML = `
+        <h3>📄 ${data.typeDocument || "Document"}</h3>
+
+        <p><strong>Organisme :</strong>
+        ${data.organisme || "Non détecté"}</p>
+
+        <p><strong>Date :</strong>
+        ${data.dateImportante || "Non détectée"}</p>
+
+        <p><strong>Montant :</strong>
+        ${data.montant || "Non détecté"}</p>
+
+        <p><strong>Urgence :</strong>
+        ${data.urgence || "Non détectée"}</p>
+
+        <button onclick="voirAnalyse(\`${doc.id}\`)">
+          👁️ Voir analyse
+        </button>
+      `;
+
+      container.appendChild(carte);
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    container.innerHTML =
+      "<p>Erreur chargement analyses.</p>";
+  }
+}
+
+window.chargerAnalyses = chargerAnalyses;
