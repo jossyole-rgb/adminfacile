@@ -409,6 +409,8 @@ app.post(
       texteExtrait = data.text.slice(0, 4000);
     }
 
+    console.log("PDF analysé avec succès");
+
           res.json({
         success: true,
         nom: req.file.originalname,
