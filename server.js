@@ -12,6 +12,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const pdfParse = require("pdf-parse");
 const OpenAI = require("openai");
 const Stripe = require("stripe");
 const admin = require("firebase-admin");
@@ -393,18 +394,27 @@ app.post(
   "/upload-document",
   upload.single("document"),
   async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
+  try {
+    if (!req.file) {
+      return res.status(400).json({
           error: "Aucun document reçu.",
-        });
-      }
+      });
+    }
 
-      res.json({
+      let texteExtrait = "";
+
+    if (req.file.mimetype === "application/pdf") {
+    const data = await pdfParse(req.file.buffer);
+
+      texteExtrait = data.text.slice(0, 4000);
+    }
+
+          res.json({
         success: true,
         nom: req.file.originalname,
         type: req.file.mimetype,
         taille: req.file.size,
+        texte: texteExtrait,
       });
     } catch (error) {
       console.error("Erreur upload document :", error);
