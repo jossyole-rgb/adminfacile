@@ -1127,9 +1127,16 @@ async function chargerAnalyses() {
         <p><strong>Urgence :</strong>
         ${data.urgence || "Non détectée"}</p>
 
-        <button onclick="voirAnalyse(\`${doc.id}\`)">
+      <div class="analyse-actions">
+        <button onclick="voirAnalyse('${doc.id}')">
           👁️ Voir analyse
         </button>
+
+        <button onclick="supprimerAnalyse('${doc.id}')"
+          class="btn-delete">
+          🗑️ Supprimer
+        </button>
+      </div>
       `;
 
       container.appendChild(carte);
@@ -1144,3 +1151,30 @@ async function chargerAnalyses() {
 }
 
 window.chargerAnalyses = chargerAnalyses;
+
+
+window.supprimerAnalyse = async function (id) {
+
+  const confirmation = confirm(
+    "Supprimer cette analyse ?"
+  );
+
+  if (!confirmation) return;
+
+  try {
+
+    await deleteDoc(doc(db, "analyses", id));
+
+    afficherNotification("Analyse supprimée");
+
+    chargerAnalyses();
+
+  } catch (error) {
+
+    console.error(error);
+
+    afficherNotification(
+      "Erreur suppression analyse"
+    );
+  }
+};
