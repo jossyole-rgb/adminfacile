@@ -401,15 +401,21 @@ app.post(
       });
     }
 
+    console.log("Route upload appelée");
+    console.log("Fichier reçu :", req.file.originalname, req.file.mimetype);
+
+
       let texteExtrait = "";
 
     if (req.file.mimetype === "application/pdf") {
-    const data = await pdfParse(req.file.buffer);
+      console.log("Début analyse PDF");
+
+      const data = await pdfParse(req.file.buffer);
 
       texteExtrait = data.text.slice(0, 4000);
     }
 
-    console.log("PDF analysé avec succès");
+      console.log("PDF analysé avec succès");
 
           res.json({
         success: true,
