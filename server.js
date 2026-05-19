@@ -148,6 +148,53 @@ app.post(
         }
       }
 
+      if (event.type === "customer.subscription.deleted") {
+  const subscription = event.data.object;
+
+  const snapshot = await firestore
+    .collection("users")
+    .where("stripeCustomerId", "==", subscription.customer)
+    .get();
+
+  snapshot.forEach(async (doc) => {
+    await doc.ref.update({
+      premium: false,
+      subscriptionStatus: "canceled",
+    });
+  });
+}
+
+if (event.type === "invoice.payment_failed") {
+  const invoice = event.data.object;
+
+  const snapshot = await firestore
+    .collection("users")
+    .where("stripeCustomerId", "==", invoice.customer)
+    .get();
+
+  snapshot.forEach(async (doc) => {
+    await doc.ref.update({
+      premium: false,
+      subscriptionStatus: "payment_failed",
+    });
+  });
+}
+
+if (event.type === "customer.subscription.updated") {
+  const subscription = event.data.object;
+
+  const snapshot = await firestore
+    .collection("users")
+    .where("stripeCustomerId", "==", subscription.customer)
+    .get();
+
+  snapshot.forEach(async (doc) => {
+    await doc.ref.update({
+      subscriptionStatus: subscription.status,
+    });
+  });
+}
+
       res.json({ received: true });
     } catch (error) {
       console.error("Erreur traitement webhook :", error);
