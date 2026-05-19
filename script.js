@@ -1171,10 +1171,26 @@ async function chargerAnalyses() {
 
 window.chargerAnalyses = chargerAnalyses;
 
+window.ouvrirConfirmModal = function (onConfirm) {
+  const modal = document.getElementById("confirmModal");
+  const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+  modal.style.display = "flex";
+
+  confirmBtn.onclick = () => {
+    onConfirm();
+    window.fermerConfirmModal();
+  };
+};
+
+window.fermerConfirmModal = function () {
+  document.getElementById("confirmModal").style.display = "none";
+};
+
 
 window.supprimerAnalyse = async function (id) {
 
-  ouvrirConfirmModal(async () => {
+  window.ouvrirConfirmModal(async () => {
   try {
     await deleteDoc(doc(db, "analyses", id));
 
