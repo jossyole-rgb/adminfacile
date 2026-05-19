@@ -834,7 +834,7 @@ select:disabled {
   max-width: 700px;
 
   max-height: 85vh;
-  overflow-y: scroll;
+  overflow-y: auto;
 
   padding-right: 10px;
 
@@ -844,6 +844,7 @@ select:disabled {
   position: relative;
 
   animation: popup 0.25s ease;
+
 }
 
 .modal-close {
@@ -879,3 +880,48 @@ select:disabled {
 body.modal-open {
   overflow: hidden;
 }
+
+.analyse-header {
+  margin-bottom: 25px;
+}
+
+.analyse-header h2 {
+  color: #1d4ed8;
+  font-size: 28px;
+}
+
+.analyse-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.analyse-section h3 {
+  margin-bottom: 15px;
+  color: #1e293b;
+}
+
+.analyse-section p {
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.urgence-badge {
+  background: #facc15;
+  color: #111827;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: bold;
+}
+
+.analyse-actions-text {
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.analyse-resume {
+  line-height: 1.8;
+  color: #334155;
+}
+

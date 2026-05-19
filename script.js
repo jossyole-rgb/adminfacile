@@ -1192,20 +1192,58 @@ window.voirAnalyse = async function (id) {
 
     const data = analyseSnap.data();
 
-    alert(`
-📄 ${data.typeDocument || "Document"}
+    window.voirAnalyse = function(data) {
 
-Organisme : ${data.organisme || "Non détecté"}
-Date : ${data.dateImportante || "Non détectée"}
-Montant : ${data.montant || "Non détecté"}
-Urgence : ${data.urgence || "Non détectée"}
+  const modal = document.getElementById("analyseModal");
+  const content = document.getElementById("analyseModalContent");
 
-Actions :
-${data.actions || "Aucune action"}
+  document.body.classList.add("modal-open");
 
-Résumé :
-${data.resume || "Aucun résumé"}
-    `);
+  content.innerHTML = `
+  
+    <div class="analyse-header">
+      <h2>📄 Analyse complète</h2>
+    </div>
+
+    <div class="analyse-section">
+      <h3>📁 Informations document</h3>
+
+      <p><strong>Type :</strong> ${data.typeDocument || "Non détecté"}</p>
+
+      <p><strong>Organisme :</strong> ${data.organisme || "Non détecté"}</p>
+
+      <p><strong>Date :</strong> ${data.dateImportante || "Non détectée"}</p>
+
+      <p><strong>Montant :</strong> ${data.montant || "Non détecté"}</p>
+
+      <p>
+        <strong>Urgence :</strong>
+        <span class="urgence-badge">
+          ${data.urgence || "Moyenne"}
+        </span>
+      </p>
+    </div>
+
+    <div class="analyse-section">
+      <h3>✅ Actions recommandées</h3>
+
+      <div class="analyse-actions-text">
+        ${data.actions || "Aucune action recommandée"}
+      </div>
+    </div>
+
+    <div class="analyse-section">
+      <h3>🧠 Résumé IA</h3>
+
+      <div class="analyse-resume">
+        ${data.resume || "Aucun résumé disponible"}
+      </div>
+    </div>
+
+  `;
+
+  modal.style.display = "flex";
+};
   } catch (error) {
     console.error(error);
     afficherNotification("Erreur ouverture analyse.");
@@ -1243,6 +1281,6 @@ window.voirAnalyse = function (id) {
 
 window.fermerAnalyseModal = function () {
   document.getElementById("analyseModal").style.display = "none";
-  
+
   document.body.classList.remove("modal-open");
 };
