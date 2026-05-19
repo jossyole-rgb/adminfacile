@@ -1136,6 +1136,21 @@ async function chargerAnalyses() {
 
     const querySnapshot = await getDocs(q);
 
+    const totalAnalysesElement =
+      document.getElementById("totalAnalyses");
+
+    const premiumStatusElement =
+      document.getElementById("premiumStatus");
+
+    if (totalAnalysesElement) {
+      totalAnalysesElement.textContent = querySnapshot.size;
+    }
+
+    if (premiumStatusElement) {
+      premiumStatusElement.textContent =
+        utilisateurPremium ? "Premium ⭐" : "Gratuit";
+    }
+
     if (querySnapshot.empty) {
       container.innerHTML =
         "<p>Aucune analyse sauvegardée.</p>";

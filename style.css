@@ -1078,3 +1078,36 @@ body.modal-open {
     transform: rotate(360deg);
   }
 }
+
+
+/* =========================
+   STATS ANALYSES
+========================= */
+
+.analyses-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: #f8fafc;
+  border-left: 5px solid #1f4ed8;
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.stat-card span {
+  display: block;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.stat-card strong {
+  font-size: 24px;
+  color: #1f4ed8;
+}
