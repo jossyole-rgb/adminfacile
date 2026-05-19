@@ -53,6 +53,21 @@ function afficherNotification(message) {
   }, 3000);
 }
 
+function afficherLoader(message = "Chargement...") {
+  const overlay = document.getElementById("loaderOverlay");
+  const text = document.getElementById("loaderText");
+
+  text.innerText = message;
+
+  overlay.style.display = "flex";
+}
+
+function masquerLoader() {
+  const overlay = document.getElementById("loaderOverlay");
+
+  overlay.style.display = "none";
+}
+
 function afficherToast(message, type = "success") {
 
   const container = document.getElementById("toastContainer");
@@ -1098,6 +1113,9 @@ afficherNotification("Document envoyé au serveur.");
 
 
 async function chargerAnalyses() {
+
+  afficherLoader("Chargement des analyses...");
+
   const container = document.getElementById("listeAnalyses");
 
   container.innerHTML = "<p>Chargement...</p>";
@@ -1161,7 +1179,12 @@ async function chargerAnalyses() {
       container.appendChild(carte);
     });
 
+   masquerLoader(); 
+
   } catch (error) {
+
+    masquerLoader();
+    
     console.error(error);
 
     container.innerHTML =
