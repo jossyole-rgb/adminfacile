@@ -1124,6 +1124,8 @@ async function chargerAnalyses() {
     if (!utilisateurConnecte) {
       container.innerHTML =
         "<p>Utilisateur non connecté.</p>";
+
+      masquerLoader();
       return;
     }
 
@@ -1137,6 +1139,8 @@ async function chargerAnalyses() {
     if (querySnapshot.empty) {
       container.innerHTML =
         "<p>Aucune analyse sauvegardée.</p>";
+
+      masquerLoader();
       return;
     }
 
@@ -1184,7 +1188,7 @@ async function chargerAnalyses() {
   } catch (error) {
 
     masquerLoader();
-    
+
     console.error(error);
 
     container.innerHTML =
