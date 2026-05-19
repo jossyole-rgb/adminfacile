@@ -1111,3 +1111,27 @@ body.modal-open {
   font-size: 24px;
   color: #1f4ed8;
 }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 25px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 20px;
+  margin-top: 20px;
+}
+
+.empty-icon {
+  font-size: 42px;
+  margin-bottom: 15px;
+}
+
+.empty-state h3 {
+  color: #1d4ed8;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #64748b;
+  font-weight: 500;
+}

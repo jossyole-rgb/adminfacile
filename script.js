@@ -1152,8 +1152,13 @@ async function chargerAnalyses() {
     }
 
     if (querySnapshot.empty) {
-      container.innerHTML =
-        "<p>Aucune analyse sauvegardée.</p>";
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>Aucune analyse sauvegardée</h3>
+          <p>Ajoute ton premier document pour commencer ton coffre-fort administratif.</p>
+        </div>
+      `;
 
       masquerLoader();
       return;
