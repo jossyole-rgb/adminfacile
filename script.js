@@ -53,6 +53,25 @@ function afficherNotification(message) {
   }, 3000);
 }
 
+function afficherToast(message, type = "success") {
+
+  const container = document.getElementById("toastContainer");
+
+  const toast = document.createElement("div");
+
+  toast.className = `toast toast-${type}`;
+
+  toast.innerHTML = `
+    ${message}
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3500);
+}
+
 
 /* =========================
    RESET PASSWORD
@@ -1165,7 +1184,7 @@ window.supprimerAnalyse = async function (id) {
 
     await deleteDoc(doc(db, "analyses", id));
 
-    afficherNotification("Analyse supprimée");
+    afficherToast("✅ Analyse supprimée", "success");
 
     chargerAnalyses();
 
