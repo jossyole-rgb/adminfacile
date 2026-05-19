@@ -1135,3 +1135,275 @@ body.modal-open {
   color: #64748b;
   font-weight: 500;
 }
+
+
+/* =========================
+   RESPONSIVE MOBILE PREMIUM
+========================= */
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  header {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  nav a {
+    font-size: 15px;
+  }
+
+  .container {
+    width: 100%;
+    padding: 15px;
+  }
+
+  section,
+  .upload-box,
+  .analyses-box,
+  .dashboard-box,
+  .historique-box {
+    width: 100%;
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  h1 {
+    font-size: 30px;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  button {
+    width: 100%;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dashboard-card,
+  .premium-card {
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .dashboard-card h3,
+  .premium-card h3 {
+    font-size: 20px;
+  }
+
+  .dashboard-card p,
+  .premium-card p {
+    font-size: 18px;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 768px) {
+  .analyse-card {
+    padding: 22px;
+  }
+
+  .analyse-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .analyse-actions button,
+  .analyse-actions .btn-delete {
+    width: 100%;
+  }
+
+  .btn-delete {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar,
+  header {
+    gap: 18px;
+  }
+
+  nav {
+    width: 100%;
+  }
+
+  nav ul {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .dark-mode-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  button,
+  .btn-delete,
+  .premium-card button {
+    min-height: 52px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content,
+  .confirm-content {
+    width: calc(100% - 30px);
+    max-width: none;
+    max-height: 85vh;
+    padding: 24px;
+    border-radius: 18px;
+  }
+
+  .modal-close {
+    top: 12px;
+    right: 12px;
+  }
+
+  .confirm-actions {
+    flex-direction: column;
+  }
+
+  .confirm-actions button {
+    width: 100%;
+  }
+}
+
+
+/* =========================
+   MICRO-ANIMATIONS PREMIUM
+========================= */
+
+button,
+.dashboard-card,
+.analyse-card,
+.stat-card,
+.premium-card,
+.upload-box,
+.analyses-box,
+.dashboard-box,
+.historique-box {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease,
+    opacity 0.25s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.25);
+}
+
+.dashboard-card:hover,
+.analyse-card:hover,
+.stat-card:hover,
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.12);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-card,
+.analyse-card,
+.empty-state,
+.modal-content,
+.confirm-content,
+.loader-box {
+  animation: fadeUp 0.35s ease;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+  box-shadow: 0 10px 22px rgba(220, 38, 38, 0.28);
+}
+
+.premium-card button:hover {
+  background: white;
+  color: #1d4ed8;
+}
+
+.dark-mode-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+}
+
+section,
+.upload-box,
+.analyses-box,
+.dashboard-box,
+.historique-box {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.analyse-card,
+.dashboard-card,
+.stat-card {
+  border: 1px solid rgba(37, 99, 235, 0.08);
+}
+
+.empty-state {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.empty-state:hover {
+  transform: translateY(-3px);
+  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
