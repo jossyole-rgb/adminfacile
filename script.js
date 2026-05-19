@@ -1174,14 +1174,8 @@ window.chargerAnalyses = chargerAnalyses;
 
 window.supprimerAnalyse = async function (id) {
 
-  const confirmation = confirm(
-    "Supprimer cette analyse ?"
-  );
-
-  if (!confirmation) return;
-
+  ouvrirConfirmModal(async () => {
   try {
-
     await deleteDoc(doc(db, "analyses", id));
 
     afficherToast("✅ Analyse supprimée", "success");
@@ -1189,13 +1183,11 @@ window.supprimerAnalyse = async function (id) {
     chargerAnalyses();
 
   } catch (error) {
-
     console.error(error);
 
-    afficherNotification(
-      "Erreur suppression analyse"
-    );
+    afficherToast("❌ Erreur suppression analyse", "error");
   }
+});
 };
 
 

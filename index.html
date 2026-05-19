@@ -272,5 +272,24 @@
   </div>
 </div>
 
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div id="confirmModal" class="modal-overlay">
+  <div class="confirm-content">
+    <h3>🗑️ Supprimer cette analyse ?</h3>
+    <p>Cette action est définitive.</p>
+
+    <div class="confirm-actions">
+      <button onclick="fermerConfirmModal()" class="btn-secondary">
+        Annuler
+      </button>
+
+      <button id="confirmDeleteBtn" class="btn-delete">
+        Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
