@@ -1457,3 +1457,61 @@ window.fermerAnalyseModal = function () {
   modal.style.display = "none";
   document.body.classList.remove("modal-open");
 };
+
+
+/* =========================================
+   TELECHARGER REPONSE IA EN PDF
+========================================= */
+
+window.telechargerReponseIAPDF = function () {
+  const contenu = document.getElementById("contenuReponseIA");
+
+  if (!contenu) return;
+
+  const texte = contenu.innerText;
+
+  const fenetre = window.open("", "_blank");
+
+  fenetre.document.write(`
+    <html>
+      <head>
+        <title>Réponse IA - AdminFacile</title>
+
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            line-height: 1.7;
+            color: #111827;
+          }
+
+          h1 {
+            color: #1d4ed8;
+            margin-bottom: 30px;
+          }
+
+          .contenu {
+            white-space: pre-wrap;
+            font-size: 16px;
+          }
+        </style>
+      </head>
+
+      <body>
+        <h1>🤖 Réponse IA AdminFacile</h1>
+
+        <div class="contenu">
+          ${texte}
+        </div>
+
+        <script>
+          window.onload = () => {
+            window.print();
+          };
+        </script>
+      </body>
+    </html>
+  `);
+
+  fenetre.document.close();
+};
