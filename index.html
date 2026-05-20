@@ -309,5 +309,23 @@
   </div>
 </div>
 
+<div id="reponseIAModal" class="modal-overlay">
+  <div class="modal-content ia-modal-content">
+    <button class="modal-close" onclick="fermerModalReponseIA()">×</button>
+
+    <div class="ia-header">
+      <h2>🤖 Réponse IA générée</h2>
+      <p>Réponse administrative prête à utiliser.</p>
+    </div>
+
+    <div id="reponseIAContent" class="ia-response-box"></div>
+
+    <div class="ia-actions">
+      <button onclick="copierReponseIA()">📋 Copier la réponse</button>
+      <button onclick="fermerModalReponseIA()" class="btn-secondary">Fermer</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

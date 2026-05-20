@@ -1112,8 +1112,11 @@ afficherNotification("Document envoyé au serveur.");
 };
 
 
-async function chargerAnalyses() {
+/* =========================
+   CHARGEMENT DES ANALYSES SAUVEGARDÉES
+========================= */
 
+async function chargerAnalyses() {
   afficherLoader("Chargement des analyses...");
 
   const container = document.getElementById("listeAnalyses");
@@ -1122,9 +1125,7 @@ async function chargerAnalyses() {
 
   try {
     if (!utilisateurConnecte) {
-      container.innerHTML =
-        "<p>Utilisateur non connecté.</p>";
-
+      container.innerHTML = "<p>Utilisateur non connecté.</p>";
       masquerLoader();
       return;
     }
@@ -1166,98 +1167,105 @@ async function chargerAnalyses() {
 
     container.innerHTML = "";
 
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
+    querySnapshot.forEach((documentAnalyse) => {
+      const data = documentAnalyse.data();
+      const analyseId = documentAnalyse.id;
 
       const carte = document.createElement("div");
-
       carte.className = "analyse-card";
 
       carte.innerHTML = `
         <h3>📄 ${data.typeDocument || "Document"}</h3>
 
-        <p><strong>Organisme :</strong>
-        ${data.organisme || "Non détecté"}</p>
+        <p>
+          <strong>Organisme :</strong>
+          ${data.organisme || "Non détecté"}
+        </p>
 
-        <p><strong>Date :</strong>
-        ${data.dateImportante || "Non détectée"}</p>
+        <p>
+          <strong>Date :</strong>
+          ${data.dateImportante || "Non détectée"}
+        </p>
 
-        <p><strong>Montant :</strong>
-        ${data.montant || "Non détecté"}</p>
+        <p>
+          <strong>Montant :</strong>
+          ${data.montant || "Non détecté"}
+        </p>
 
-        <p><strong>Urgence :</strong>
-        ${data.urgence || "Non détectée"}</p>
+        <p>
+          <strong>Urgence :</strong>
+          ${data.urgence || "Non détectée"}
+        </p>
 
-      <div class="analyse-actions">
-        <button onclick="voirAnalyse('${doc.id}')">
-          👁️ Voir analyse
-        </button>
+        <div class="analyse-actions">
+          <button onclick="voirAnalyse('${analyseId}')">
+            👁️ Voir analyse
+          </button>
 
-        <button class="btn-reponse-ia">
-          🤖 Générer une réponse IA
-        </button>
+          <button class="btn-reponse-ia">
+            🤖 Générer une réponse IA
+          </button>
 
-        <button onclick="supprimerAnalyse('${doc.id}')"
-          class="btn-delete">
-          🗑️ Supprimer
-        </button>
-      </div>
+          <button
+            onclick="supprimerAnalyse('${analyseId}')"
+            class="btn-delete"
+          >
+            🗑️ Supprimer
+          </button>
+        </div>
       `;
 
       container.appendChild(carte);
+
+      /* Bouton IA propre à cette carte */
+      const boutonIA = carte.querySelector(".btn-reponse-ia");
+
+      if (boutonIA) {
+        boutonIA.addEventListener("click", async () => {
+          try {
+            boutonIA.disabled = true;
+            boutonIA.textContent = "⏳ Génération IA...";
+
+            const response = await fetch(
+              "https://adminfacile.onrender.com/generer-reponse-ia",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  document:
+                    data.analyseComplete ||
+                    data.resume ||
+                    data.actions ||
+                    "",
+                  ton: "professionnel",
+                }),
+              }
+            );
+
+            const resultat = await response.json();
+
+            if (!resultat.reponse) {
+              throw new Error("Réponse IA invalide");
+            }
+
+            afficherModalReponseIA(resultat.reponse);
+          } catch (error) {
+            console.error("Erreur réponse IA :", error);
+            afficherToast("❌ Erreur génération IA", "error");
+          } finally {
+            boutonIA.disabled = false;
+            boutonIA.textContent = "🤖 Générer une réponse IA";
+          }
+        });
+      }
     });
 
-    const boutonIA = carte.querySelector(".btn-reponse-ia");
-
-boutonIA.addEventListener("click", async () => {
-  try {
-    boutonIA.disabled = true;
-    boutonIA.textContent = "⏳ Génération IA...";
-
-    const response = await fetch(
-      "https://adminfacile.onrender.com/generer-reponse-ia",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          document: data.resume || data.analyse || "",
-          ton: "professionnel",
-        }),
-      }
-    );
-
-    const resultat = await response.json();
-
-    if (!resultat.reponse) {
-      throw new Error("Réponse IA invalide");
-    }
-
-    afficherModalReponseIA(resultat.reponse);
-
-    boutonIA.disabled = false;
-    boutonIA.textContent =
-      "🤖 Générer une réponse IA";
-  } catch (error) {
-    console.error(error);
-
-    boutonIA.disabled = false;
-    boutonIA.textContent =
-      "🤖 Générer une réponse IA";
-
-    alert("Erreur génération IA");
-  }
-});
-
-   masquerLoader(); 
-
-  } catch (error) {
-
     masquerLoader();
-
-    console.error(error);
+  } catch (error) {
+    masquerLoader();
+    console.error("Erreur chargement analyses :", error);
 
     container.innerHTML =
       "<p>Erreur chargement analyses.</p>";
@@ -1266,9 +1274,51 @@ boutonIA.addEventListener("click", async () => {
 
 window.chargerAnalyses = chargerAnalyses;
 
+
+/* =========================
+   MODAL RÉPONSE IA
+========================= */
+
+window.afficherModalReponseIA = function (texte) {
+  const modal = document.getElementById("reponseIAModal");
+  const content = document.getElementById("reponseIAContent");
+
+  if (!modal || !content) return;
+
+  content.textContent = texte;
+  modal.style.display = "flex";
+  document.body.classList.add("modal-open");
+};
+
+window.fermerModalReponseIA = function () {
+  const modal = document.getElementById("reponseIAModal");
+
+  if (!modal) return;
+
+  modal.style.display = "none";
+  document.body.classList.remove("modal-open");
+};
+
+window.copierReponseIA = function () {
+  const content = document.getElementById("reponseIAContent");
+
+  if (!content) return;
+
+  navigator.clipboard.writeText(content.textContent);
+
+  afficherToast("✅ Réponse copiée", "success");
+};
+
+
+/* =========================
+   MODAL CONFIRMATION SUPPRESSION
+========================= */
+
 window.ouvrirConfirmModal = function (onConfirm) {
   const modal = document.getElementById("confirmModal");
   const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+  if (!modal || !confirmBtn) return;
 
   modal.style.display = "flex";
 
@@ -1279,28 +1329,38 @@ window.ouvrirConfirmModal = function (onConfirm) {
 };
 
 window.fermerConfirmModal = function () {
-  document.getElementById("confirmModal").style.display = "none";
+  const modal = document.getElementById("confirmModal");
+
+  if (!modal) return;
+
+  modal.style.display = "none";
 };
 
+
+/* =========================
+   SUPPRESSION ANALYSE
+========================= */
 
 window.supprimerAnalyse = async function (id) {
-
   window.ouvrirConfirmModal(async () => {
-  try {
-    await deleteDoc(doc(db, "analyses", id));
+    try {
+      await deleteDoc(doc(db, "analyses", id));
 
-    afficherToast("✅ Analyse supprimée", "success");
+      afficherToast("✅ Analyse supprimée", "success");
 
-    chargerAnalyses();
+      await chargerAnalyses();
+    } catch (error) {
+      console.error("Erreur suppression analyse :", error);
 
-  } catch (error) {
-    console.error(error);
-
-    afficherToast("❌ Erreur suppression analyse", "error");
-  }
-});
+      afficherToast("❌ Erreur suppression analyse", "error");
+    }
+  });
 };
 
+
+/* =========================
+   MODAL ANALYSE COMPLÈTE
+========================= */
 
 window.voirAnalyse = async function (id) {
   try {
@@ -1314,95 +1374,60 @@ window.voirAnalyse = async function (id) {
 
     const data = analyseSnap.data();
 
-    window.voirAnalyse = function(data) {
+    const modal = document.getElementById("analyseModal");
+    const content = document.getElementById("analyseModalContent");
 
-  const modal = document.getElementById("analyseModal");
-  const content = document.getElementById("analyseModalContent");
+    if (!modal || !content) return;
 
-  document.body.classList.add("modal-open");
-
-  content.innerHTML = `
-  
-    <div class="analyse-header">
-      <h2>📄 Analyse complète</h2>
-    </div>
-
-    <div class="analyse-section">
-      <h3>📁 Informations document</h3>
-
-      <p><strong>Type :</strong> ${data.typeDocument || "Non détecté"}</p>
-
-      <p><strong>Organisme :</strong> ${data.organisme || "Non détecté"}</p>
-
-      <p><strong>Date :</strong> ${data.dateImportante || "Non détectée"}</p>
-
-      <p><strong>Montant :</strong> ${data.montant || "Non détecté"}</p>
-
-      <p>
-        <strong>Urgence :</strong>
-        <span class="urgence-badge">
-          ${data.urgence || "Moyenne"}
-        </span>
-      </p>
-    </div>
-
-    <div class="analyse-section">
-      <h3>✅ Actions recommandées</h3>
-
-      <div class="analyse-actions-text">
-        ${data.actions || "Aucune action recommandée"}
+    content.innerHTML = `
+      <div class="analyse-header">
+        <h2>📄 Analyse complète</h2>
       </div>
-    </div>
 
-    <div class="analyse-section">
-      <h3>🧠 Résumé IA</h3>
+      <div class="analyse-section">
+        <h3>📁 Informations document</h3>
 
-      <div class="analyse-resume">
-        ${data.resume || "Aucun résumé disponible"}
+        <p><strong>Type :</strong> ${data.typeDocument || "Non détecté"}</p>
+        <p><strong>Organisme :</strong> ${data.organisme || "Non détecté"}</p>
+        <p><strong>Date :</strong> ${data.dateImportante || "Non détectée"}</p>
+        <p><strong>Montant :</strong> ${data.montant || "Non détecté"}</p>
+
+        <p>
+          <strong>Urgence :</strong>
+          <span class="urgence-badge">
+            ${data.urgence || "Moyenne"}
+          </span>
+        </p>
       </div>
-    </div>
 
-  `;
+      <div class="analyse-section">
+        <h3>✅ Actions recommandées</h3>
+        <div class="analyse-actions-text">
+          ${(data.actions || "Aucune action recommandée").replace(/\n/g, "<br>")}
+        </div>
+      </div>
 
-  modal.style.display = "flex";
-};
+      <div class="analyse-section">
+        <h3>🧠 Résumé IA</h3>
+        <div class="analyse-resume">
+          ${(data.resume || "Aucun résumé disponible").replace(/\n/g, "<br>")}
+        </div>
+      </div>
+    `;
+
+    modal.style.display = "flex";
+    document.body.classList.add("modal-open");
   } catch (error) {
-    console.error(error);
+    console.error("Erreur ouverture analyse :", error);
     afficherNotification("Erreur ouverture analyse.");
   }
 };
 
-
-window.voirAnalyse = function (id) {
-  const modal = document.getElementById("analyseModal");
-  const content = document.getElementById("analyseModalContent");
-
-  const cartes = document.querySelectorAll(".analyse-card");
-
-  cartes.forEach((carte) => {
-    const bouton = carte.querySelector("button");
-
-    if (
-      bouton &&
-      bouton.getAttribute("onclick") === `voirAnalyse('${id}')`
-    ) {
-      const texte = carte.innerHTML;
-
-      content.innerHTML = `
-        <h2>📄 Analyse complète</h2>
-        <div style="margin-top:20px;">
-          ${texte}
-        </div>
-      `;
-    }
-  });
-
-  modal.style.display = "flex";
-  document.body.classList.add("modal-open");
-};
-
 window.fermerAnalyseModal = function () {
-  document.getElementById("analyseModal").style.display = "none";
+  const modal = document.getElementById("analyseModal");
 
+  if (!modal) return;
+
+  modal.style.display = "none";
   document.body.classList.remove("modal-open");
 };
