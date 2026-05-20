@@ -1458,22 +1458,36 @@ select:focus-visible {
 
 .analyse-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin-top: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 .analyse-actions button,
 .select-ton-ia {
   height: 56px;
+  min-width: 180px;
   width: 100%;
+
   padding: 0 18px;
+
   border-radius: 14px;
+
   font-size: 16px;
   font-weight: 700;
+
+  box-sizing: border-box;
+
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.select-ton-ia {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  line-height: 56px;
 }
 
 .select-ton-ia {
