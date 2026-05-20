@@ -478,36 +478,56 @@ if (texteExtrait.trim()) {
       {
         role: "user",
         content: ` 
-      Analyse ce document administratif français.
+        Analyse ce document administratif français comme un assistant administratif expert.
 
-      Réponds STRICTEMENT avec cette structure :
+        Ta mission :
+        - identifier précisément le type de document ;
+        - repérer l’organisme émetteur ;
+        - détecter les dates importantes ;
+        - détecter les montants ;
+        - évaluer l’urgence réelle ;
+        - expliquer ce que l’utilisateur doit comprendre ;
+        - recommander des actions concrètes ;
+        - signaler les risques ou points de vigilance ;
+        - produire un résumé clair, utile et professionnel.
 
-      TYPE_DOCUMENT:
-      (type du document)
+        Réponds STRICTEMENT avec cette structure :
 
-      ORGANISME:
-      (nom de l'organisme)
+        TYPE_DOCUMENT:
+        (type précis du document)
 
-      DATE_IMPORTANTE:
-      (date importante)
+        ORGANISME:
+        (nom de l'organisme ou "Non détecté")
 
-      MONTANT:
-      (montant si présent)
+        DATE_IMPORTANTE:
+        (date principale + signification)
 
-      URGENCE:
-      (faible, moyenne ou élevée)
+        MONTANT:
+        (montant principal + explication, ou "Aucun montant détecté")
 
-      ACTIONS_RECOMMANDEES:
-      - action 1
-      - action 2
-      - action 3
+        URGENCE:
+        (faible, moyenne ou élevée)
 
-      RESUME:
-      (résumé clair et professionnel)
+        POINTS_IMPORTANTS:
+        - point important 1
+        - point important 2
+        - point important 3
 
-      DOCUMENT:
-      ${texteExtrait}
-      `,
+        ACTIONS_RECOMMANDEES:
+        - action concrète 1
+        - action concrète 2
+        - action concrète 3
+
+        RISQUES_OU_VIGILANCE:
+        - risque ou vigilance 1
+        - risque ou vigilance 2
+
+        RESUME:
+        (résumé clair en 4 à 6 lignes, avec un ton professionnel)
+
+        DOCUMENT:
+        ${texteExtrait}
+        `,
     },
   ],
 });
