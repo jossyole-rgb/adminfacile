@@ -1198,68 +1198,94 @@ async function chargerAnalyses() {
         </p>
 
         <div class="analyse-actions">
-          <button onclick="voirAnalyse('${analyseId}')">
-            👁️ Voir analyse
-          </button>
 
-          <button class="btn-reponse-ia">
-            🤖 Générer une réponse IA
-          </button>
+  <button onclick="voirAnalyse('${analyseId}')">
+    👁️ Voir analyse
+  </button>
 
-          <button
-            onclick="supprimerAnalyse('${analyseId}')"
-            class="btn-delete"
-          >
-            🗑️ Supprimer
-          </button>
-        </div>
+  <!-- Sélecteur de ton IA -->
+  <select class="select-ton-ia">
+    <option value="professionnel">
+      Professionnel
+    </option>
+
+    <option value="juridique">
+      Juridique
+    </option>
+
+    <option value="ferme">
+      Ferme
+    </option>
+
+    <option value="poli">
+      Poli
+    </option>
+  </select>
+
+  <!-- Bouton réponse IA -->
+  <button class="btn-reponse-ia">
+    🤖 Générer une réponse IA
+  </button>
+
+  <!-- Suppression -->
+  <button
+    onclick="supprimerAnalyse('${analyseId}')"
+    class="btn-delete"
+  >
+    🗑️ Supprimer
+  </button>
+
+</div>
       `;
 
       container.appendChild(carte);
 
       /* Bouton IA propre à cette carte */
-      const boutonIA = carte.querySelector(".btn-reponse-ia");
+const boutonIA = carte.querySelector(".btn-reponse-ia");
 
-      if (boutonIA) {
-        boutonIA.addEventListener("click", async () => {
-          try {
-            boutonIA.disabled = true;
-            boutonIA.textContent = "⏳ Génération IA...";
+if (boutonIA) {
+  boutonIA.addEventListener("click", async () => {
+    try {
+      boutonIA.disabled = true;
+      boutonIA.textContent = "⏳ Génération IA...";
 
-            const response = await fetch(
-              "https://adminfacile.onrender.com/generer-reponse-ia",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  document:
-                    data.analyseComplete ||
-                    data.resume ||
-                    data.actions ||
-                    "",
-                  ton: "professionnel",
-                }),
-              }
-            );
+      const selectTon = carte.querySelector(".select-ton-ia");
+      const tonChoisi = selectTon?.value || "professionnel";
 
-            const resultat = await response.json();
+      const response = await fetch(
+        "https://adminfacile.onrender.com/generer-reponse-ia",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            document:
+              data.analyseComplete ||
+              data.resume ||
+              data.actions ||
+              "",
+            ton: tonChoisi,
+          }),
+        }
+      );
 
-            if (!resultat.reponse) {
-              throw new Error("Réponse IA invalide");
-            }
+      const resultat = await response.json();
 
-            afficherModalReponseIA(resultat.reponse);
-          } catch (error) {
-            console.error("Erreur réponse IA :", error);
-            afficherToast("❌ Erreur génération IA", "error");
-          } finally {
-            boutonIA.disabled = false;
-            boutonIA.textContent = "🤖 Générer une réponse IA";
-          }
-        });
+      if (!resultat.reponse) {
+        throw new Error("Réponse IA invalide");
       }
+
+      afficherModalReponseIA(resultat.reponse);
+    } catch (error) {
+      console.error("Erreur réponse IA :", error);
+      afficherToast("❌ Erreur génération IA", "error");
+    } finally {
+      boutonIA.disabled = false;
+      boutonIA.textContent = "🤖 Générer une réponse IA";
+    }
+  });
+}
     });
 
     masquerLoader();
