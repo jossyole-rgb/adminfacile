@@ -1457,24 +1457,20 @@ select:focus-visible {
 }
 
 .analyse-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
 }
 
 .analyse-actions button,
 .select-ton-ia {
   height: 56px;
-  min-width: 180px;
-
+  width: 100%;
   padding: 0 18px;
-
   border-radius: 14px;
-
   font-size: 16px;
   font-weight: 700;
-
   display: flex;
   align-items: center;
   justify-content: center;
