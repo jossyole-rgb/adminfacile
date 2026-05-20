@@ -1464,19 +1464,31 @@ window.fermerAnalyseModal = function () {
 ========================================= */
 
 window.telechargerReponseIAPDF = function () {
-  const contenu = document.getElementById("contenuReponseIA");
+  const contenu = document.getElementById("reponseIAContent");
 
-  if (!contenu) return;
+  if (!contenu) {
+    afficherToast("❌ Réponse IA introuvable", "error");
+    return;
+  }
 
   const texte = contenu.innerText;
 
+  if (!texte.trim()) {
+    afficherToast("❌ Aucune réponse IA à télécharger", "error");
+    return;
+  }
+
   const fenetre = window.open("", "_blank");
+
+  if (!fenetre) {
+    afficherToast("❌ Autorise les popups pour télécharger le PDF", "error");
+    return;
+  }
 
   fenetre.document.write(`
     <html>
       <head>
         <title>Réponse IA - AdminFacile</title>
-
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -1499,13 +1511,10 @@ window.telechargerReponseIAPDF = function () {
 
       <body>
         <h1>🤖 Réponse IA AdminFacile</h1>
-
-        <div class="contenu">
-          ${texte}
-        </div>
+        <div class="contenu">${texte}</div>
 
         <script>
-          window.onload = () => {
+          window.onload = function () {
             window.print();
           };
         </script>
