@@ -1193,6 +1193,10 @@ async function chargerAnalyses() {
           👁️ Voir analyse
         </button>
 
+        <button class="btn-reponse-ia">
+          🤖 Générer une réponse IA
+        </button>
+
         <button onclick="supprimerAnalyse('${doc.id}')"
           class="btn-delete">
           🗑️ Supprimer
@@ -1202,6 +1206,50 @@ async function chargerAnalyses() {
 
       container.appendChild(carte);
     });
+
+    const boutonIA = carte.querySelector(".btn-reponse-ia");
+
+boutonIA.addEventListener("click", async () => {
+  try {
+    boutonIA.disabled = true;
+    boutonIA.textContent = "⏳ Génération IA...";
+
+    const response = await fetch(
+      "https://adminfacile.onrender.com/generer-reponse-ia",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          document: data.resume || data.analyse || "",
+          ton: "professionnel",
+        }),
+      }
+    );
+
+    const resultat = await response.json();
+
+    if (!resultat.reponse) {
+      throw new Error("Réponse IA invalide");
+    }
+
+    afficherModalReponseIA(resultat.reponse);
+
+    boutonIA.disabled = false;
+    boutonIA.textContent =
+      "🤖 Générer une réponse IA";
+  } catch (error) {
+    console.error(error);
+
+    boutonIA.disabled = false;
+    boutonIA.textContent =
+      "🤖 Générer une réponse IA";
+
+    alert("Erreur génération IA");
+  }
+});
 
    masquerLoader(); 
 

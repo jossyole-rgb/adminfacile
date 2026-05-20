@@ -641,6 +641,76 @@ app.post("/create-customer-portal-session", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
+
+app.post("/generer-reponse-ia", async (req, res) => {
+  try {
+    const { document, ton } = req.body;
+
+    if (!document) {
+      return res.status(400).json({
+        error: "Document requis",
+      });
+    }
+
+    const styles = {
+      professionnel:
+        "Réponse professionnelle, claire, crédible et administrative.",
+      juridique:
+        "Réponse juridique, formelle et structurée.",
+      ferme:
+        "Réponse ferme, sérieuse et assertive.",
+      poli:
+        "Réponse polie, calme et diplomatique.",
+    };
+
+    const instruction =
+      styles[ton] || styles.professionnel;
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+
+      messages: [
+        {
+          role: "system",
+          content:
+            "Tu es un expert administratif français spécialisé dans les réponses aux courriers administratifs.",
+        },
+
+        {
+          role: "user",
+          content: `
+${instruction}
+
+Analyse le document suivant puis rédige une réponse administrative complète, crédible et réaliste.
+
+La réponse doit :
+- être prête à envoyer ;
+- utiliser un vrai ton administratif français ;
+- contenir une introduction ;
+- répondre précisément au problème ;
+- inclure une demande claire ;
+- finir par une formule de politesse professionnelle.
+
+DOCUMENT :
+
+${document}
+`,
+        },
+      ],
+    });
+
+    const reponse = completion.choices[0].message.content;
+
+    res.json({ reponse });
+  } catch (error) {
+    console.error("Erreur génération réponse IA :", error);
+
+    res.status(500).json({
+      error: "Erreur IA",
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Serveur AdminFacile lancé sur le port ${PORT}`);
 });
