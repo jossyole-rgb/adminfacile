@@ -1455,3 +1455,38 @@ select:focus-visible {
   background: white;
   font-weight: 600;
 }
+
+.analyse-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.analyse-actions button,
+.select-ton-ia {
+  height: 56px;
+  min-width: 180px;
+
+  padding: 0 18px;
+
+  border-radius: 14px;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.select-ton-ia {
+  border: 1px solid #dbe2ea;
+  background: white;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background: #ff4d4f;
+  color: white;
+}
