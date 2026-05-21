@@ -999,6 +999,13 @@ fichiers.forEach((fichier) => {
   formData.append("documents", fichier);
 });
 
+/* Loader IA */
+resultat.innerHTML = `
+<div class="loader-ia">
+  🤖 Lecture du document...
+</div>
+`;
+
 const response = await fetch(
   "https://adminfacile.onrender.com/upload-document",
   {

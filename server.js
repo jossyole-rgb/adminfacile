@@ -468,16 +468,18 @@ app.post(
       req.files[0].mimetype === "image/jpeg" ||
       req.files[0].mimetype === "image/jpg"
     ) {
-      console.log("Début OCR image...");
+      console.log("OCR démarré...");
 
-      const result = await Tesseract.recognize(
-        req.files[0].buffer,
-        "fra"
-      );
+const result = await Tesseract.recognize(
+  req.files[0].buffer,
+  "fra"
+);
 
-      texteExtrait = result.data.text.slice(0, 4000);
+console.log("OCR terminé");
 
-      console.log("OCR image terminé avec succès");
+texteExtrait = result.data.text.slice(0, 4000);
+
+console.log("OCR image terminé avec succès");
     }
 
       console.log("PDF analysé avec succès");
