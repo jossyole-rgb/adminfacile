@@ -1539,7 +1539,7 @@ window.telechargerReponseIAPDF = function () {
 };
 
 
-async function poserQuestionDocument() {
+window.poserQuestionDocument = async function () {
   try {
     if (!analyseCourante) {
       afficherNotification("Analyse un document avant.");
@@ -1592,4 +1592,4 @@ async function poserQuestionDocument() {
     console.error(error);
     afficherNotification("Erreur chat IA.");
   }
-}
+};
