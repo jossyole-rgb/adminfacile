@@ -566,9 +566,9 @@ if (texteExtrait.trim()) {
 
 res.json({
   success: true,
-  nom: req.file.originalname,
-  type: req.file.mimetype,
-  taille: req.file.size,
+  nom: premierFichier.originalname,
+  type: premierFichier.mimetype,
+  taille: premierFichier.size,
   analyse: analyseIA,
 });
     } catch (error) {
