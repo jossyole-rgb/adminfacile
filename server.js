@@ -450,28 +450,35 @@ app.post(
     }
 
     console.log("Route upload appelée");
-    console.log("Fichier reçu :", req.file.originalname, req.file.mimetype);
+    const premierFichier = req.files[0];
+
+    console.log(
+      "Fichier reçu :",
+      premierFichier.originalname,
+      premierFichier.mimetype
+    );
 
 
       let texteExtrait = "";
 
-    if (req.files[0].mimetype === "application/pdf") {
-      console.log("Début analyse PDF");
+    if (premierFichier.mimetype === "application/pdf") {
 
-      const data = await pdfParse(req.file.buffer);
+  console.log("Début analyse PDF");
 
-      texteExtrait = data.text.slice(0, 4000);
-    }
+  const data = await pdfParse(premierFichier.buffer);
+
+  texteExtrait = data.text.slice(0, 4000);
+}
 
     if (
-      req.files[0].mimetype === "image/png" ||
-      req.files[0].mimetype === "image/jpeg" ||
-      req.files[0].mimetype === "image/jpg"
-    ) {
+  premierFichier.mimetype === "image/png" ||
+  premierFichier.mimetype === "image/jpeg" ||
+  premierFichier.mimetype === "image/jpg"
+) {
       console.log("OCR démarré...");
 
 const result = await Tesseract.recognize(
-  req.files[0].buffer,
+  premierFichier.buffer,
   "fra"
 );
 
