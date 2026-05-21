@@ -65,14 +65,44 @@ const apiLimiter = rateLimit({
 
 app.use(apiLimiter);
 
+const iaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+
+  max: 30,
+
+  message: {
+    error:
+      "Trop de requêtes IA. Merci de patienter quelques minutes.",
+  },
+});
+
 /* =========================
    CONFIGURATION UPLOAD
 ========================= */
 
+const typesAutorises = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+];
+
 const upload = multer({
   storage: multer.memoryStorage(),
+
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 8 * 1024 * 1024,
+    files: 5,
+  },
+
+  fileFilter: (req, file, cb) => {
+    if (!typesAutorises.includes(file.mimetype)) {
+      return cb(
+        new Error("Type de fichier non autorisé. PDF, PNG ou JPG uniquement.")
+      );
+    }
+
+    cb(null, true);
   },
 });
 
@@ -265,7 +295,7 @@ app.get("/", (req, res) => {
    GÉNÉRATION DE LETTRE IA
 ========================= */
 
-app.post("/generer-lettre", async (req, res) => {
+app.post("/generer-lettre", iaLimiter, async (req, res) => {
   try {
     const { type, tonLettre, nom, destinataire, objet } = req.body;
 
@@ -323,7 +353,7 @@ app.post("/generer-lettre", async (req, res) => {
    RÉSUMÉ IA DE LA LETTRE
 ========================= */
 
-app.post("/resumer-lettre", async (req, res) => {
+app.post("/resumer-lettre", iaLimiter, async (req, res) => {
   try {
     const { texte } = req.body;
 
@@ -368,7 +398,7 @@ app.post("/resumer-lettre", async (req, res) => {
    RÉÉCRITURE IA
 ========================= */
 
-app.post("/reecrire-lettre", async (req, res) => {
+app.post("/reecrire-lettre", iaLimiter, async (req, res) => {
   try {
     const { texte, style } = req.body;
 
@@ -433,7 +463,7 @@ ${texte}`,
    ASSISTANT ADMINISTRATIF IA
 ========================= */
 
-app.post("/chat-admin", async (req, res) => {
+app.post("/chat-admin", iaLimiter, async (req, res) => {
   try {
     const { message } = req.body;
 
@@ -480,6 +510,7 @@ app.post("/chat-admin", async (req, res) => {
 
 app.post(
   "/upload-document",
+  iaLimiter,
   upload.array("documents", 5),
   async (req, res) => {
   try {
@@ -709,7 +740,7 @@ app.post("/create-customer-portal-session", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 
-app.post("/generer-reponse-ia", async (req, res) => {
+app.post("/generer-reponse-ia", iaLimiter, async (req, res) => {
   try {
     const { document, ton } = req.body;
 
@@ -779,7 +810,7 @@ ${document}
 });
 
 
-app.post("/chat-document", async (req, res) => {
+app.post("/chat-document", iaLimiter, async (req, res) => {
   try {
     const { question, analyse } = req.body;
 
