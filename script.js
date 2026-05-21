@@ -34,6 +34,7 @@ let stripeCustomerId = null;
 let emailVerifie = false;
 let nombreMessagesIA = 0;
 const LIMITE_MESSAGES_IA = 5;
+let analyseCourante = "";
 
 
 /* =========================
@@ -1022,6 +1023,8 @@ if (!response.ok) {
 
 const analyse = data.analyse || "";
 
+analyseCourante = analyse;
+
 const typeDocument =
   extraireChampAnalyse(analyse, "TYPE_DOCUMENT");
 
@@ -1534,3 +1537,59 @@ window.telechargerReponseIAPDF = function () {
 
   fenetre.document.close();
 };
+
+
+async function poserQuestionDocument() {
+  try {
+    if (!analyseCourante) {
+      afficherNotification("Analyse un document avant.");
+      return;
+    }
+
+    const input = document.getElementById("documentChatInput");
+    const messages = document.getElementById("documentChatMessages");
+
+    const question = input.value.trim();
+
+    if (!question) {
+      afficherNotification("Pose une question.");
+      return;
+    }
+
+    messages.innerHTML += `
+      <div class="chat-user">
+        👤 ${question}
+      </div>
+    `;
+
+    input.value = "";
+
+    const response = await fetch(
+      "https://adminfacile.onrender.com/chat-document",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          question,
+          analyse: analyseCourante,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    messages.innerHTML += `
+      <div class="chat-ai">
+        🤖 ${data.reponse}
+      </div>
+    `;
+
+    messages.scrollTop = messages.scrollHeight;
+  } catch (error) {
+    console.error(error);
+    afficherNotification("Erreur chat IA.");
+  }
+}

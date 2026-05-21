@@ -738,6 +738,53 @@ ${document}
   }
 });
 
+
+app.post("/chat-document", async (req, res) => {
+  try {
+    const { question, analyse } = req.body;
+
+    if (!question || !analyse) {
+      return res.status(400).json({
+        error: "Question et analyse requises.",
+      });
+    }
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+
+      messages: [
+        {
+          role: "system",
+          content:
+            "Tu es un assistant administratif français expert. Tu réponds uniquement à partir de l'analyse du document fournie.",
+        },
+        {
+          role: "user",
+          content: `
+Analyse du document :
+${analyse}
+
+Question utilisateur :
+${question}
+
+Réponds clairement, simplement et utilement.
+`,
+        },
+      ],
+    });
+
+    const reponse = completion.choices[0].message.content;
+
+    res.json({ reponse });
+  } catch (error) {
+    console.error("Erreur chat document :", error);
+
+    res.status(500).json({
+      error: "Erreur chat document.",
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Serveur AdminFacile lancé sur le port ${PORT}`);
 });
