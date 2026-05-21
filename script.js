@@ -1587,6 +1587,22 @@ window.poserQuestionDocument = async function () {
       </div>
     `;
 
+    /* Sauvegarde mémoire conversationnelle */
+    if (utilisateurConnecte) {
+      await addDoc(collection(db, "documentChats"), {
+        userId: utilisateurConnecte.uid,
+
+        question,
+        reponse: data.reponse,
+
+        analyse: analyseCourante,
+
+        createdAt: new Date(),
+      });
+
+      console.log("Mémoire documentChat sauvegardée !");
+    }
+
     messages.scrollTop = messages.scrollHeight;
   } catch (error) {
     console.error(error);
