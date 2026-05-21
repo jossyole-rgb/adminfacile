@@ -17,6 +17,9 @@ const OpenAI = require("openai");
 const Stripe = require("stripe");
 const admin = require("firebase-admin");
 const Tesseract = require("tesseract.js");
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const compression = require("compression");
 
 
 /* =========================
@@ -24,6 +27,43 @@ const Tesseract = require("tesseract.js");
 ========================= */
 
 const app = express();
+
+
+/* =========================
+   SECURITE PRODUCTION
+========================= */
+
+app.set("trust proxy", 1);
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
+
+app.use(compression());
+
+app.use(
+  cors({
+    origin: [
+      "https://venerable-pixie-e9c9a9.netlify.app",
+      "http://localhost:5500",
+      "http://127.0.0.1:5500",
+    ],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    error: "Trop de requêtes. Réessaie dans quelques minutes.",
+  },
+});
+
+app.use(apiLimiter);
 
 /* =========================
    CONFIGURATION UPLOAD
