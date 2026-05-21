@@ -16,6 +16,7 @@ const pdfParse = require("pdf-parse");
 const OpenAI = require("openai");
 const Stripe = require("stripe");
 const admin = require("firebase-admin");
+const Tesseract = require("tesseract.js");
 
 
 /* =========================
@@ -439,10 +440,10 @@ app.post("/chat-admin", async (req, res) => {
 
 app.post(
   "/upload-document",
-  upload.single("document"),
+  upload.array("documents", 5),
   async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({
           error: "Aucun document reçu.",
       });
@@ -454,12 +455,29 @@ app.post(
 
       let texteExtrait = "";
 
-    if (req.file.mimetype === "application/pdf") {
+    if (req.files[0].mimetype === "application/pdf") {
       console.log("Début analyse PDF");
 
       const data = await pdfParse(req.file.buffer);
 
       texteExtrait = data.text.slice(0, 4000);
+    }
+
+    if (
+      req.files[0].mimetype === "image/png" ||
+      req.files[0].mimetype === "image/jpeg" ||
+      req.files[0].mimetype === "image/jpg"
+    ) {
+      console.log("Début OCR image...");
+
+      const result = await Tesseract.recognize(
+        req.files[0].buffer,
+        "fra"
+      );
+
+      texteExtrait = result.data.text.slice(0, 4000);
+
+      console.log("OCR image terminé avec succès");
     }
 
       console.log("PDF analysé avec succès");

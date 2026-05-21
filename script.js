@@ -989,12 +989,15 @@ window.analyserDocument = async function () {
     return;
   }
 
-  const fichier = input.files[0];
+  const fichiers = Array.from(input.files);
+  const fichier = fichiers[0];
 
   resultat.innerText = "Analyse du document en cours...";
 
 const formData = new FormData();
-formData.append("document", fichier);
+fichiers.forEach((fichier) => {
+  formData.append("documents", fichier);
+});
 
 const response = await fetch(
   "https://adminfacile.onrender.com/upload-document",
