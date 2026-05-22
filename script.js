@@ -147,6 +147,10 @@ window.creerCompte = async function () {
       password
     );
 
+    await sendEmailVerification(userCredential.user);
+
+    alert("Compte créé ! Vérifie ton email avant connexion.");
+
     const user = userCredential.user;
 
     await setDoc(doc(db, "users", user.uid), {
@@ -157,7 +161,6 @@ window.creerCompte = async function () {
       createdAt: new Date()
     });
 
-    await sendEmailVerification(user);
 
     afficherNotification("📩 Compte créé. Email de vérification envoyé.");
   } catch (error) {
