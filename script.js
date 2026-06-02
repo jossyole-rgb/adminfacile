@@ -113,21 +113,27 @@ window.reinitialiserMotDePasse = async function () {
 ========================= */
 
 onAuthStateChanged(auth, async (user) => {
-  utilisateurConnecte = user;
 
-  if (user) {
-    await user.reload();
+    if (!user) {
 
-    emailVerifie = user.emailVerified;
+        // Si on est sur dashboard sans être connecté
+        if (window.location.pathname.includes("dashboard.html")) {
 
-    await verifierPremium(user.uid);
-  } else {
-    emailVerifie = false;
-    utilisateurPremium = false;
-    stripeCustomerId = null;
-  }
+            window.location.href = "index.html";
+            return;
+        }
 
-  await mettreAJourDashboard();
+    } else {
+
+        // Si connecté et encore sur la page login
+        if (!window.location.pathname.includes("dashboard.html")) {
+
+            window.location.href = "dashboard.html";
+            return;
+        }
+
+        await mettreAJourDashboard();
+    }
 });
 
 
