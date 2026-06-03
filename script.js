@@ -8,7 +8,8 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   sendEmailVerification,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
 } from "./firebase.js";
 
 import {
@@ -168,6 +169,26 @@ window.creerCompte = async function () {
   } catch (error) {
     console.error("Erreur création compte :", error);
     afficherNotification("Erreur lors de la création du compte.");
+  }
+};
+
+window.connexion = async function () {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    afficherNotification("Veuillez remplir tous les champs.");
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+
+    afficherNotification("Connexion réussie.");
+    window.location.href = "dashboard.html";
+  } catch (error) {
+    console.error("Erreur connexion :", error);
+    afficherNotification("Email ou mot de passe incorrect.");
   }
 };
 
