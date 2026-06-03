@@ -113,27 +113,23 @@ window.reinitialiserMotDePasse = async function () {
 ========================= */
 
 onAuthStateChanged(auth, async (user) => {
+  const pageActuelle = window.location.pathname;
 
-    if (!user) {
+  const estDashboard = pageActuelle.includes("dashboard.html");
 
-        // Si on est sur dashboard sans être connecté
-        if (window.location.pathname.includes("dashboard.html")) {
-
-            window.location.href = "index.html";
-            return;
-        }
-
-    } else {
-
-        // Si connecté et encore sur la page login
-        if (!window.location.pathname.includes("dashboard.html")) {
-
-            window.location.href = "dashboard.html";
-            return;
-        }
-
-        await mettreAJourDashboard();
+  if (!user) {
+    if (estDashboard) {
+      window.location.href = "index.html";
     }
+    return;
+  }
+
+  if (!estDashboard) {
+    window.location.href = "dashboard.html";
+    return;
+  }
+
+  await mettreAJourDashboard();
 });
 
 
