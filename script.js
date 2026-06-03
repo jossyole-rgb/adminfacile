@@ -570,6 +570,38 @@ window.reecrireLettre = async function (style) {
    HISTORIQUE DES LETTRES
 ========================= */
 
+window.telechargerLettreHistorique = async function (id) {
+  try {
+    const lettreRef = doc(db, "lettres", id);
+    const lettreSnap = await getDoc(lettreRef);
+
+    if (!lettreSnap.exists()) {
+      afficherNotification("Lettre introuvable.");
+      return;
+    }
+
+    const lettre = lettreSnap.data();
+    const contenu = lettre.contenu || "";
+
+    if (!contenu.trim()) {
+      afficherNotification("Aucun contenu à télécharger.");
+      return;
+    }
+
+    const blob = new Blob([contenu], { type: "text/plain" });
+    const lien = document.createElement("a");
+
+    lien.href = URL.createObjectURL(blob);
+    lien.download = `lettre_${lettre.type || "adminfacile"}.txt`;
+    lien.click();
+
+    afficherNotification("Lettre téléchargée.");
+  } catch (error) {
+    console.error("Erreur téléchargement historique :", error);
+    afficherNotification("Erreur téléchargement.");
+  }
+};
+
 window.chargerHistorique = async function () {
   const historique = document.getElementById("historique");
 
@@ -609,6 +641,12 @@ window.chargerHistorique = async function () {
         <div class="lettre-card">
           <div class="lettre-header">
             <h3>${lettre.type}</h3>
+
+            <button 
+              onclick="telechargerLettreHistorique('${document.id}')"
+            >
+              📥 Télécharger
+            </button>
 
             <button 
               class="btn-supprimer"
