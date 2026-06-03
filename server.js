@@ -305,6 +305,63 @@ app.post("/generer-lettre", iaLimiter, async (req, res) => {
       });
     }
 
+    const promptsTypes = {
+  resiliation:
+    "Rédige une lettre de résiliation claire et juridiquement correcte.",
+
+  caf:
+    "Rédige une réclamation adressée à la CAF avec un ton administratif professionnel.",
+
+  recours_caf:
+    "Rédige un recours administratif CAF argumenté et structuré.",
+
+  delai:
+    "Rédige une demande de délai de paiement crédible et respectueuse.",
+
+  logement:
+    "Rédige une demande de logement mettant en avant la situation personnelle du demandeur.",
+
+  logement_social:
+    "Rédige une demande de logement social détaillée en insistant sur l'urgence éventuelle de la situation.",
+
+  apl:
+    "Rédige une demande d'APL claire et complète.",
+
+  stage:
+    "Rédige une demande de stage professionnelle et motivée.",
+
+  emploi:
+    "Rédige une candidature à un emploi convaincante et professionnelle.",
+
+  prefecture:
+    "Rédige un courrier administratif destiné à une préfecture avec un ton officiel.",
+
+  banque:
+    "Rédige un courrier destiné à une banque avec un vocabulaire bancaire professionnel.",
+
+  assurance:
+    "Rédige un courrier destiné à une compagnie d'assurance avec un ton formel.",
+
+  employeur:
+    "Rédige un courrier destiné à un employeur avec un ton professionnel et respectueux.",
+
+  ecole:
+    "Rédige un courrier destiné à un établissement scolaire ou universitaire.",
+
+  contestation_amende:
+    "Rédige une contestation d'amende argumentée et juridiquement crédible.",
+
+  avocat:
+    "Rédige un courrier destiné à un avocat avec un vocabulaire juridique adapté.",
+
+  rupture_contrat:
+    "Rédige une demande de rupture de contrat professionnelle et conforme aux usages administratifs."
+};
+
+const contexteType =
+  promptsTypes[type] ||
+  "Rédige une lettre administrative française professionnelle.";
+
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -325,13 +382,20 @@ app.post("/generer-lettre", iaLimiter, async (req, res) => {
         },
         {
           role: "user",
-          content: `Rédige une lettre administrative de type ${type}
+          content: `
+          ${contexteType}
 
           Le ton de la lettre doit être : ${tonLettre}.
 
-          Nom: ${nom}
-          Destinataire: ${destinataire}
-          Situation: ${objet}`,
+          Nom : ${nom}
+
+          Destinataire : ${destinataire}
+
+          Situation :
+          ${objet}
+
+          La lettre doit être complète, réaliste, détaillée et prête à être envoyée.
+          `,
         },
       ],
     });
