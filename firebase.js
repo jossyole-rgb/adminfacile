@@ -133,5 +133,7 @@ export {
   onAuthStateChanged,
   sendPasswordResetEmail,
   sendEmailVerification,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
 };
