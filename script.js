@@ -9,7 +9,8 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  signOut
 } from "./firebase.js";
 
 import {
@@ -173,8 +174,8 @@ window.creerCompte = async function () {
 };
 
 window.connexion = async function () {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+  const email = document.getElementById("email")?.value.trim();
+  const password = document.getElementById("password")?.value.trim();
 
   if (!email || !password) {
     afficherNotification("Veuillez remplir tous les champs.");
@@ -184,7 +185,8 @@ window.connexion = async function () {
   try {
     await signInWithEmailAndPassword(auth, email, password);
 
-    afficherNotification("Connexion réussie.");
+    afficherNotification("Connexion réussie !");
+
     window.location.href = "dashboard.html";
   } catch (error) {
     console.error("Erreur connexion :", error);
