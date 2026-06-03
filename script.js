@@ -116,15 +116,25 @@ window.reinitialiserMotDePasse = async function () {
 
 onAuthStateChanged(auth, async (user) => {
   const pageActuelle = window.location.pathname;
-
   const estDashboard = pageActuelle.includes("dashboard.html");
 
   if (!user) {
+    utilisateurConnecte = null;
+    emailVerifie = false;
+    utilisateurPremium = false;
+    stripeCustomerId = null;
+
     if (estDashboard) {
       window.location.href = "index.html";
     }
+
     return;
   }
+
+  utilisateurConnecte = user;
+  emailVerifie = user.emailVerified;
+
+  await verifierPremium(user.uid);
 
   if (!estDashboard) {
     window.location.href = "dashboard.html";
