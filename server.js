@@ -46,6 +46,7 @@ app.use(compression());
 app.use(
   cors({
     origin: [
+      "https://adminfacile-app.netlify.app",
       "https://venerable-pixie-e9c9a9.netlify.app",
       "http://localhost:5500",
       "http://127.0.0.1:5500",
