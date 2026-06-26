@@ -125,13 +125,6 @@ const firestore = admin.firestore();
 
 
 /* =========================
-   MIDDLEWARES
-========================= */
-
-app.use(cors());
-
-
-/* =========================
    WEBHOOK STRIPE
    Important : cette route doit être AVANT express.json()
 ========================= */
@@ -747,10 +740,10 @@ app.post("/create-checkout-session", async (req, res) => {
       ],
 
       success_url:
-        "https://venerable-pixie-e9c9a9.netlify.app/success.html",
+        "https://adminfacile-app.netlify.app/success.html",
 
       cancel_url:
-        "https://venerable-pixie-e9c9a9.netlify.app/index.html",
+        "https://adminfacile-app.netlify.app/index.html",
     });
 
     res.json({
@@ -782,7 +775,7 @@ app.post("/create-customer-portal-session", async (req, res) => {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: "https://venerable-pixie-e9c9a9.netlify.app",
+      return_url: "https://adminfacile-app.netlify.app",
     });
 
     res.json({
