@@ -719,7 +719,13 @@ app.post("/create-checkout-session", async (req, res) => {
   try {
     const { uid, email } = req.body;
 
-    if (!uid || !email) {
+    if (!process.env.STRIPE_PRICE_ID) {
+  return res.status(500).json({
+    error: "Configuration Stripe incomplète.",
+  });
+}
+
+    if (!uid || !email || !email.includes("@")) {
       return res.status(400).json({
         error: "UID ou email manquant.",
       });
