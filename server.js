@@ -156,115 +156,98 @@ app.post(
         const customerId = session.customer;
         const uid = session.client_reference_id;
 
-        if (!email || !customerId) {
-          console.log("Email ou customerId manquant dans la session Stripe.");
+        if (!uid || !email || !customerId) {
+          console.log("Données Stripe manquantes.");
           return res.json({ received: true });
         }
 
-        const userRef = firestore.collection("users").doc(uid);
-
-        await userRef.update({
-          premium: true,
-          subscriptionStatus: "active",
-          stripeCustomerId: customerId,
-        });
-
-        if (!snapshot.empty) {
-          const userDoc = snapshot.docs[0];
-
-          await userDoc.ref.update({
-            premium: true,
-            subscriptionStatus: "active",
-            stripeCustomerId: customerId,
-          });
-
-          console.log(`Premium activé pour : ${email}`);
-        } else {
-          await usersRef.add({
+        await firestore.collection("users").doc(uid).set(
+          {
             email,
             premium: true,
             subscriptionStatus: "active",
             stripeCustomerId: customerId,
-            createdAt: new Date().toISOString(),
-          });
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
 
-          console.log(`Utilisateur Premium créé : ${email}`);
-        }
+        console.log(`Premium activé pour : ${email}`);
       }
 
       if (event.type === "customer.subscription.deleted") {
         const subscription = event.data.object;
         const customerId = subscription.customer;
 
-        const usersRef = firestore.collection("users");
-        const snapshot = await usersRef
+        const snapshot = await firestore
+          .collection("users")
           .where("stripeCustomerId", "==", customerId)
           .get();
 
-        if (!snapshot.empty) {
-          const userDoc = snapshot.docs[0];
-
-          await userDoc.ref.update({
+        const updates = snapshot.docs.map((userDoc) =>
+          userDoc.ref.update({
             premium: false,
-            subscriptionStatus: "inactive",
-          });
+            subscriptionStatus: "canceled",
+            updatedAt: new Date().toISOString(),
+          })
+        );
 
-          console.log(`Premium désactivé pour customer : ${customerId}`);
-        }
+        await Promise.all(updates);
+
+        console.log(`Premium annulé pour customer : ${customerId}`);
       }
 
-      if (event.type === "customer.subscription.deleted") {
-  const subscription = event.data.object;
+      if (event.type === "invoice.payment_failed") {
+        const invoice = event.data.object;
+        const customerId = invoice.customer;
 
-  const snapshot = await firestore
-    .collection("users")
-    .where("stripeCustomerId", "==", subscription.customer)
-    .get();
+        const snapshot = await firestore
+          .collection("users")
+          .where("stripeCustomerId", "==", customerId)
+          .get();
 
-  snapshot.forEach(async (doc) => {
-    await doc.ref.update({
-      premium: false,
-      subscriptionStatus: "canceled",
-    });
-  });
-}
+        const updates = snapshot.docs.map((userDoc) =>
+          userDoc.ref.update({
+            premium: false,
+            subscriptionStatus: "payment_failed",
+            updatedAt: new Date().toISOString(),
+          })
+        );
 
-if (event.type === "invoice.payment_failed") {
-  const invoice = event.data.object;
+        await Promise.all(updates);
 
-  const snapshot = await firestore
-    .collection("users")
-    .where("stripeCustomerId", "==", invoice.customer)
-    .get();
+        console.log(`Paiement échoué pour customer : ${customerId}`);
+      }
 
-  snapshot.forEach(async (doc) => {
-    await doc.ref.update({
-      premium: false,
-      subscriptionStatus: "payment_failed",
-    });
-  });
-}
+      if (event.type === "customer.subscription.updated") {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
 
-if (event.type === "customer.subscription.updated") {
-  const subscription = event.data.object;
+        const isActive = subscription.status === "active";
 
-  const snapshot = await firestore
-    .collection("users")
-    .where("stripeCustomerId", "==", subscription.customer)
-    .get();
+        const snapshot = await firestore
+          .collection("users")
+          .where("stripeCustomerId", "==", customerId)
+          .get();
 
-  snapshot.forEach(async (doc) => {
-    await doc.ref.update({
-      subscriptionStatus: subscription.status,
-    });
-  });
-}
+        const updates = snapshot.docs.map((userDoc) =>
+          userDoc.ref.update({
+            premium: isActive,
+            subscriptionStatus: subscription.status,
+            updatedAt: new Date().toISOString(),
+          })
+        );
 
-      res.json({ received: true });
+        await Promise.all(updates);
+
+        console.log(`Abonnement mis à jour : ${customerId}`);
+      }
+
+      return res.json({ received: true });
     } catch (error) {
       console.error("Erreur traitement webhook :", error);
 
-      res.status(500).json({
+      return res.status(500).json({
         error: "Erreur lors du traitement du webhook Stripe.",
       });
     }
