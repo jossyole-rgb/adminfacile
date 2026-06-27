@@ -37,6 +37,7 @@ let emailVerifie = false;
 let nombreMessagesIA = 0;
 const LIMITE_MESSAGES_IA = 5;
 let analyseCourante = "";
+const API_URL = "https://adminfacile.onrender.com";
 
 
 /* =========================
@@ -260,7 +261,7 @@ window.genererLettre = async function () {
     desactiverFormulaire(true);
 
     const reponse = await fetch(
-      "https://adminfacile.onrender.com/generer-lettre",
+      `${API_URL}/generer-lettre`,
       {
         method: "POST",
         headers: {
@@ -486,7 +487,7 @@ window.resumerLettre = async function () {
     resultat.innerText = "L’IA résume votre lettre...";
 
     const response = await fetch(
-      "https://adminfacile.onrender.com/resumer-lettre",
+      `${API_URL}/resumer-lettre`,
       {
         method: "POST",
         headers: {
@@ -533,7 +534,7 @@ window.reecrireLettre = async function (style) {
     resultat.innerText = "L’IA réécrit votre lettre...";
 
     const response = await fetch(
-      "https://adminfacile.onrender.com/reecrire-lettre",
+      `${API_URL}/reecrire-lettre`,
       {
         method: "POST",
         headers: {
@@ -805,7 +806,7 @@ window.passerPremium = async function () {
     }
 
     const response = await fetch(
-  "https://adminfacile.onrender.com/create-checkout-session",
+  `${API_URL}/create-checkout-session`,
   {
     method: "POST",
     headers: {
@@ -854,7 +855,7 @@ window.gererAbonnement = async function () {
     }
 
     const response = await fetch(
-      "https://adminfacile.onrender.com/create-customer-portal-session",
+      `${API_URL}/create-customer-portal-session`,
       {
         method: "POST",
         headers: {
@@ -999,7 +1000,7 @@ window.envoyerMessageIA = async function () {
   try {
 
     const response = await fetch(
-      "https://adminfacile.onrender.com/chat-admin",
+      `${API_URL}/chat-admin`,
       {
         method: "POST",
 
@@ -1084,7 +1085,7 @@ resultat.innerHTML = `
 `;
 
 const response = await fetch(
-  "https://adminfacile.onrender.com/upload-document",
+  `${API_URL}/upload-document`,
   {
     method: "POST",
     body: formData,
@@ -1342,7 +1343,7 @@ if (boutonIA) {
       const tonChoisi = selectTon?.value || "professionnel";
 
       const response = await fetch(
-        "https://adminfacile.onrender.com/generer-reponse-ia",
+        `${API_URL}/generer-reponse-ia`,
         {
           method: "POST",
           headers: {
@@ -1641,7 +1642,7 @@ window.poserQuestionDocument = async function () {
     input.value = "";
 
     const response = await fetch(
-      "https://adminfacile.onrender.com/chat-document",
+      `${API_URL}/chat-document`,
       {
         method: "POST",
         headers: {
