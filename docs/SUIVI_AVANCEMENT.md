@@ -9,7 +9,7 @@ Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 - **Fichiers modifiés :** `server.js`, `script.js`, `dashboard.html`, `package.json`, `package-lock.json`, `.gitignore` ; nouveaux : `backend/**`, `tests-frontend/**`, `firestore.rules`, `firebase.json`, `.env.example`, `docs/**`.
 - **Tests validés :** `npm test` 59/59, `npm run test:interface` 8/8, `npm run test:emulateur` 46/46 (commit `beeed0b`).
 - **Blocages :**
-  - B1 — Push GitHub refusé depuis l'environnement de Claude : l'application Claude GitHub n'a pas l'accès en écriture au dépôt. Les commits sont locaux tant que l'accès n'est pas accordé.
+  - B1 — ~~Push GitHub refusé~~ résolu le 13 octobre 2026 : commits poussés sur `develop`.
   - B2 — Configuration Firebase/Stripe/Render non accessible : points « À confirmer » de l'audit.
 - **Décisions en attente :** P-01 à P-05 (`docs/DECISIONS_TECHNIQUES.md`).
 
