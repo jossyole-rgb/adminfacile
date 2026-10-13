@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// Règles Firestore AdminFacile 2.0
+// Principe : chaque utilisateur n'accède qu'à ses propres documents.
+// Les champs Premium/Stripe et les compteurs de quota ne sont écrits que par le serveur (Admin SDK, qui ignore ces règles).
+// À déployer uniquement après validation (voir docs/DEPLOIEMENT.md).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function connecte() {
+      return request.auth != null;
+    }
+
+    function estProprietaire(uid) {
+      return connecte() && request.auth.uid == uid;
+    }
+
+    function possedeDocumentExistant() {
+      return connecte() && resource.data.userId == request.auth.uid;
+    }
+
+    function creeSonPropreDocument() {
+      return connecte() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Profil : lecture par son propriétaire ; création initiale sans aucun droit Premium.
+    match /users/{uid} {
+      allow read: if estProprietaire(uid);
+
+      allow create: if estProprietaire(uid)
+        && request.resource.data.keys().hasOnly(['email', 'premium', 'subscriptionStatus', 'stripeCustomerId', 'createdAt'])
+        && request.resource.data.get('premium', false) == false
+        && request.resource.data.get('subscriptionStatus', 'inactive') == 'inactive'
+        && request.resource.data.get('stripeCustomerId', null) == null;
+
+      allow update, delete: if false;
+    }
+
+    // Historique des lettres.
+    match /lettres/{lettreId} {
+      allow read, delete: if possedeDocumentExistant();
+      allow create: if creeSonPropreDocument();
+      allow update: if false;
+    }
+
+    // Analyses de documents.
+    match /analyses/{analyseId} {
+      allow read, delete: if possedeDocumentExistant();
+      allow create: if creeSonPropreDocument();
+      allow update: if false;
+    }
+
+    // Conversations sur un document.
+    match /documentChats/{chatId} {
+      allow read, delete: if possedeDocumentExistant();
+      allow create: if creeSonPropreDocument();
+      allow update: if false;
+    }
+
+    // usage/{uid} et stripeEvents/{eventId} : serveur uniquement.
+    // Toute autre collection : refusée par défaut.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,3 +1,9 @@
 node_modules
 .env
 .DS_Store
+# Journaux et fichiers locaux
+*.log
+firebase-debug.log
+firestore-debug.log
+.env.*
+!.env.example
