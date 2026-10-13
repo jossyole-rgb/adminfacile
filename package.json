@@ -7,7 +7,8 @@
     "start": "node server.js",
     "test": "node --test backend/tests/*.test.js",
     "test:emulateur": "firebase emulators:exec --only firestore --project demo-adminfacile \"node --test --test-concurrency=1 backend/tests/emulateur/*.test.js\"",
-    "test:tout": "npm test && npm run test:emulateur"
+    "test:tout": "npm test && npm run test:interface && npm run test:emulateur",
+    "test:interface": "node --test --test-concurrency=1 tests-frontend/*.test.js"
   },
   "dependencies": {
     "compression": "^1.8.1",
@@ -29,6 +30,7 @@
     "@firebase/rules-unit-testing": "^4.0.1",
     "firebase": "^11.10.0",
     "firebase-tools": "^14.27.0",
+    "playwright": "^1.56.1",
     "supertest": "^7.3.1"
   },
   "engines": {

@@ -41,6 +41,74 @@ const API_URL = "https://adminfacile.onrender.com";
 
 
 /* =========================
+   SÉCURITÉ AFFICHAGE
+   Tout texte venant de l'IA, de Firestore ou de l'utilisateur
+   est échappé avant d'être inséré avec innerHTML.
+========================= */
+
+function echapperHTML(valeur) {
+  return String(valeur ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function texteMultiligne(valeur) {
+  return echapperHTML(valeur).replace(/\n/g, "<br>");
+}
+
+
+/* =========================
+   APPELS API
+   Ajoute le token Firebase et renvoie une erreur lisible.
+========================= */
+
+async function appelerAPI(chemin, { method = "POST", body, formData } = {}) {
+  if (!utilisateurConnecte) {
+    throw new Error("Connecte-toi pour utiliser cette fonctionnalité.");
+  }
+
+  const token = await utilisateurConnecte.getIdToken();
+  const headers = { Authorization: `Bearer ${token}` };
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  let reponse;
+
+  try {
+    reponse = await fetch(`${API_URL}${chemin}`, {
+      method,
+      headers,
+      body: formData || (body !== undefined ? JSON.stringify(body) : undefined)
+    });
+  } catch (error) {
+    throw new Error("Connexion au serveur impossible. Vérifie ta connexion internet.");
+  }
+
+  let data = {};
+
+  try {
+    data = await reponse.json();
+  } catch (error) {
+    data = {};
+  }
+
+  if (!reponse.ok) {
+    const erreur = new Error(data.error || "Une erreur est survenue. Réessaie.");
+    erreur.code = data.code;
+    erreur.status = reponse.status;
+    throw erreur;
+  }
+
+  return data;
+}
+
+
+/* =========================
    NOTIFICATIONS
 ========================= */
 
@@ -240,19 +308,7 @@ window.genererLettre = async function () {
   }
 
   try {
-    const q = query(
-      collection(db, "lettres"),
-      where("userId", "==", utilisateurConnecte.uid)
-    );
-
-    const querySnapshot = await getDocs(q);
-
-    if (!utilisateurPremium && querySnapshot.size >= 3) {
-      resultat.innerText = "Limite gratuite atteinte.";
-      afficherNotification("Limite gratuite atteinte.");
-      return;
-    }
-
+    // Le quota gratuit est vérifié par le serveur (réponse 402 si atteint).
     bouton.disabled = true;
     bouton.innerText = "Génération...";
     loader.style.display = "block";
@@ -260,33 +316,15 @@ window.genererLettre = async function () {
 
     desactiverFormulaire(true);
 
-    const token = await utilisateurConnecte.getIdToken();
-
-    const reponse = await fetch(
-      `${API_URL}/generer-lettre`,
-      {
-        method: "POST",
-        headers: {
-           "Content-Type": "application/json",
-           "Authorization": `Bearer ${token}`
-},
-        body: JSON.stringify({
-          type,
-          tonLettre,
-          nom,
-          destinataire,
-          objet
-        })
+    const data = await appelerAPI("/generer-lettre", {
+      body: {
+        type,
+        tonLettre,
+        nom,
+        destinataire,
+        objet
       }
-    );
-
-    const data = await reponse.json();
-
-     if (!reponse.ok) {
-  throw new Error(
-    data.error || "Erreur lors de la génération de la lettre."
-  );
-}
+    });
 
     if (!data.lettre) {
       throw new Error("Aucune lettre reçue.");
@@ -308,8 +346,15 @@ window.genererLettre = async function () {
     afficherNotification("Lettre générée avec succès.");
   } catch (error) {
     console.error("Erreur génération :", error);
-    resultat.innerText = "Erreur lors de la génération.";
-    afficherNotification("Erreur lors de la génération.");
+
+    if (error.code === "QUOTA_EXCEEDED") {
+      resultat.innerText = "Limite gratuite atteinte. Passe Premium pour continuer.";
+      afficherNotification("Limite gratuite atteinte.");
+      await mettreAJourDashboard();
+    } else {
+      resultat.innerText = `Erreur lors de la génération : ${error.message}`;
+      afficherNotification("Erreur lors de la génération.");
+    }
   } finally {
     loader.style.display = "none";
     bouton.disabled = false;
@@ -326,6 +371,7 @@ window.genererLettre = async function () {
 
 function desactiverFormulaire(etat) {
   document.getElementById("typeLettre").disabled = etat;
+  document.getElementById("tonLettre").disabled = etat;
   document.getElementById("nom").disabled = etat;
   document.getElementById("destinataire").disabled = etat;
   document.getElementById("objet").disabled = etat;
@@ -495,20 +541,7 @@ window.resumerLettre = async function () {
   try {
     resultat.innerText = "L’IA résume votre lettre...";
 
-    const response = await fetch(
-      `${API_URL}/resumer-lettre`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          texte
-        })
-      }
-    );
-
-    const data = await response.json();
+    const data = await appelerAPI("/resumer-lettre", { body: { texte } });
 
     if (!data.resume) {
       throw new Error("Aucun résumé reçu.");
@@ -519,7 +552,8 @@ window.resumerLettre = async function () {
     afficherNotification("Résumé généré.");
   } catch (error) {
     console.error("Erreur résumé IA :", error);
-    afficherNotification("Erreur lors du résumé.");
+    resultat.innerText = texte;
+    afficherNotification(error.message || "Erreur lors du résumé.");
   }
 };
 
@@ -542,22 +576,7 @@ window.reecrireLettre = async function (style) {
 
     resultat.innerText = "L’IA réécrit votre lettre...";
 
-    const response = await fetch(
-      `${API_URL}/reecrire-lettre`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          texte,
-          style
-        })
-      }
-    );
-
-    const data = await response.json();
+    const data = await appelerAPI("/reecrire-lettre", { body: { texte, style } });
 
     if (!data.lettre) {
       throw new Error("Aucune réécriture reçue.");
@@ -571,7 +590,8 @@ window.reecrireLettre = async function (style) {
 
     console.error("Erreur réécriture IA :", error);
 
-    afficherNotification("Erreur lors de la réécriture.");
+    resultat.innerText = texte;
+    afficherNotification(error.message || "Erreur lors de la réécriture.");
   }
 };
 
@@ -650,24 +670,24 @@ window.chargerHistorique = async function () {
       historique.innerHTML += `
         <div class="lettre-card">
           <div class="lettre-header">
-            <h3>${lettre.type}</h3>
+            <h3>${echapperHTML(lettre.type)}</h3>
 
             <button 
-              onclick="telechargerLettreHistorique('${document.id}')"
+              onclick="telechargerLettreHistorique('${echapperHTML(document.id)}')"
             >
               📥 Télécharger
             </button>
 
             <button 
               class="btn-supprimer"
-              onclick="supprimerLettre('${document.id}')"
+              onclick="supprimerLettre('${echapperHTML(document.id)}')"
             >
               🗑️ Supprimer
             </button>
           </div>
 
-          <small>${lettre.date}</small>
-          <p>${lettre.contenu}</p>
+          <small>${echapperHTML(lettre.date)}</small>
+          <p>${texteMultiligne(lettre.contenu)}</p>
         </div>
       `;
     });
@@ -784,11 +804,24 @@ async function mettreAJourDashboard() {
 
   if (utilisateurPremium) {
     limiteGratuite.innerText = "Illimité";
-  } else {
-    const restantes = 3 - querySnapshot.size;
+    return;
+  }
 
-    limiteGratuite.innerText =
-      restantes > 0 ? restantes + " restantes" : "Limite atteinte";
+  // Le compteur de référence est celui du serveur.
+  try {
+    const compte = await appelerAPI("/api/me", { method: "GET" });
+
+    if (compte.premium) {
+      limiteGratuite.innerText = "Illimité";
+    } else {
+      const restantes = compte.lettersRemaining;
+
+      limiteGratuite.innerText =
+        restantes > 0 ? restantes + " restantes" : "Limite atteinte";
+    }
+  } catch (error) {
+    console.error("Erreur lecture quota :", error);
+    limiteGratuite.innerText = "Indisponible";
   }
 }
 
@@ -814,21 +847,8 @@ window.passerPremium = async function () {
       return;
     }
 
-    const response = await fetch(
-  `${API_URL}/create-checkout-session`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      uid: utilisateurConnecte.uid,
-      email: utilisateurConnecte.email
-    })
-  }
-);
-
-    const data = await response.json();
+    // L'identité est déduite du token côté serveur.
+    const data = await appelerAPI("/create-checkout-session", { body: {} });
 
     if (!data.url) {
       throw new Error("URL Stripe absente.");
@@ -837,7 +857,7 @@ window.passerPremium = async function () {
     window.location.href = data.url;
   } catch (error) {
     console.error("Erreur Stripe :", error);
-    afficherNotification("Erreur Stripe.");
+    afficherNotification(error.message || "Erreur Stripe.");
   }
 };
 
@@ -858,25 +878,8 @@ window.gererAbonnement = async function () {
       return;
     }
 
-    if (!stripeCustomerId) {
-      afficherNotification("Aucun abonnement Stripe trouvé.");
-      return;
-    }
-
-    const response = await fetch(
-      `${API_URL}/create-customer-portal-session`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          customerId: stripeCustomerId
-        })
-      }
-    );
-
-    const data = await response.json();
+    // Le client Stripe est retrouvé par le serveur à partir du compte connecté.
+    const data = await appelerAPI("/create-customer-portal-session", { body: {} });
 
     if (!data.url) {
       throw new Error("URL du portail Stripe absente.");
@@ -885,7 +888,7 @@ window.gererAbonnement = async function () {
     window.location.href = data.url;
   } catch (error) {
     console.error("Erreur portail Stripe :", error);
-    afficherNotification("Erreur lors de l’ouverture du portail.");
+    afficherNotification(error.message || "Erreur lors de l’ouverture du portail.");
   }
 };
 
@@ -1000,7 +1003,7 @@ window.envoyerMessageIA = async function () {
 
   messages.innerHTML += `
     <div class="message-user">
-      ${question}
+      ${texteMultiligne(question)}
     </div>
   `;
 
@@ -1008,31 +1011,15 @@ window.envoyerMessageIA = async function () {
 
   try {
 
-    const response = await fetch(
-      `${API_URL}/chat-admin`,
-      {
-        method: "POST",
+    const data = await appelerAPI("/chat-admin", { body: { message: question } });
 
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          message: question
-        })
-      }
-    );
-
-    const data =
-      await response.json();
-
-      nombreMessagesIA++;
+    nombreMessagesIA++;
 
     /* Réponse IA */
 
     messages.innerHTML += `
       <div class="message-ia">
-        ${data.reponse}
+        ${texteMultiligne(data.reponse)}
       </div>
     `;
 
@@ -1047,7 +1034,7 @@ window.envoyerMessageIA = async function () {
     );
 
     afficherNotification(
-      "Erreur assistant IA."
+      error.message || "Erreur assistant IA."
     );
   }
 };
@@ -1077,137 +1064,141 @@ window.analyserDocument = async function () {
   }
 
   const fichiers = Array.from(input.files);
-  const fichier = fichiers[0];
+  const tailleMax = 8 * 1024 * 1024;
 
-  resultat.innerText = "Analyse du document en cours...";
+  if (fichiers.length > 5) {
+    afficherNotification("5 documents maximum par analyse.");
+    return;
+  }
 
-const formData = new FormData();
-fichiers.forEach((fichier) => {
-  formData.append("documents", fichier);
-});
+  if (fichiers.some((fichier) => fichier.size > tailleMax)) {
+    afficherNotification("Chaque fichier doit faire moins de 8 Mo.");
+    return;
+  }
 
-/* Loader IA */
-resultat.innerHTML = `
-<div class="loader-ia">
+  const formData = new FormData();
+  fichiers.forEach((fichier) => {
+    formData.append("documents", fichier);
+  });
+
+  /* Loader IA */
+  resultat.innerHTML = `
+<div class="loader-ia" role="status">
   🤖 Lecture du document...
 </div>
 `;
 
-const response = await fetch(
-  `${API_URL}/upload-document`,
-  {
-    method: "POST",
-    body: formData,
+  let data;
+
+  try {
+    data = await appelerAPI("/upload-document", { formData });
+  } catch (error) {
+    console.error("Erreur analyse document :", error);
+    resultat.innerText = `Analyse impossible : ${error.message}`;
+    afficherNotification("Erreur lors de l’analyse du document.");
+    return;
   }
-);
 
-const data = await response.json();
+  const analyse = data.analyse || "";
 
-if (!response.ok) {
-  throw new Error(data.error || "Erreur upload");
-}
+  if (!analyse) {
+    resultat.innerText = data.avertissement || "Aucun texte lisible n'a été trouvé dans ce document.";
+    return;
+  }
 
-const analyse = data.analyse || "";
+  analyseCourante = analyse;
 
-analyseCourante = analyse;
-
-const typeDocument =
-  extraireChampAnalyse(analyse, "TYPE_DOCUMENT");
-
-const organisme =
-  extraireChampAnalyse(analyse, "ORGANISME");
-
-const dateImportante =
-  extraireChampAnalyse(analyse, "DATE_IMPORTANTE");
-
-const montant =
-  extraireChampAnalyse(analyse, "MONTANT");
-
-const urgence =
-  extraireChampAnalyse(analyse, "URGENCE");
-
-const actions =
-  extraireChampAnalyse(analyse, "ACTIONS_RECOMMANDEES");
-
-const resume =
-  extraireChampAnalyse(analyse, "RESUME");
+  const typeDocument = extraireChampAnalyse(analyse, "TYPE_DOCUMENT");
+  const organisme = extraireChampAnalyse(analyse, "ORGANISME");
+  const dateImportante = extraireChampAnalyse(analyse, "DATE_IMPORTANTE");
+  const montant = extraireChampAnalyse(analyse, "MONTANT");
+  const urgence = extraireChampAnalyse(analyse, "URGENCE");
+  const actions = extraireChampAnalyse(analyse, "ACTIONS_RECOMMANDEES");
+  const pointsAVerifier = extraireChampAnalyse(analyse, "POINTS_A_VERIFIER");
+  const resume = extraireChampAnalyse(analyse, "RESUME");
 
   let urgenceClass = "urgence-moyenne";
 
-if (urgence.toLowerCase().includes("faible")) {
-  urgenceClass = "urgence-faible";
-}
+  if (urgence.toLowerCase().includes("faible")) {
+    urgenceClass = "urgence-faible";
+  }
 
-if (urgence.toLowerCase().includes("élevée")) {
-  urgenceClass = "urgence-elevee";
-}
+  if (urgence.toLowerCase().includes("élevée")) {
+    urgenceClass = "urgence-elevee";
+  }
 
-resultat.innerHTML = `
+  resultat.innerHTML = `
   <h3>📄 Analyse du document</h3>
 
   <div class="analyse-cards">
     <div class="analyse-card">
       <span>📄 Type</span>
-      <strong>${typeDocument}</strong>
+      <strong>${echapperHTML(typeDocument)}</strong>
     </div>
 
     <div class="analyse-card">
       <span>🏢 Organisme</span>
-      <strong>${organisme}</strong>
+      <strong>${echapperHTML(organisme)}</strong>
     </div>
 
     <div class="analyse-card">
       <span>📅 Date</span>
-      <strong>${dateImportante}</strong>
+      <strong>${echapperHTML(dateImportante)}</strong>
     </div>
 
     <div class="analyse-card">
       <span>💰 Montant</span>
-      <strong>${montant}</strong>
+      <strong>${echapperHTML(montant)}</strong>
     </div>
 
     <div class="analyse-card ${urgenceClass}">
       <span>⚠️ Urgence</span>
-      <strong>${urgence}</strong>
+      <strong>${echapperHTML(urgence)}</strong>
     </div>
   </div>
 
   <div class="analyse-section">
     <h4>✅ Actions recommandées</h4>
-    <p>${actions.replace(/\n/g, "<br>")}</p>
+    <p>${texteMultiligne(actions)}</p>
+  </div>
+
+  <div class="analyse-section">
+    <h4>🔎 Points à vérifier</h4>
+    <p>${texteMultiligne(pointsAVerifier)}</p>
   </div>
 
   <div class="analyse-section">
     <h4>🧠 Résumé</h4>
-    <p>${resume.replace(/\n/g, "<br>")}</p>
+    <p>${texteMultiligne(resume)}</p>
   </div>
+
+  <p class="avertissement-ia">
+    Analyse automatique à vérifier : elle ne remplace pas l’avis de l’organisme concerné ni d’un professionnel.
+  </p>
 `;
 
-    console.log("Utilisateur connecté :", utilisateurConnecte);
-    console.log("Sauvegarde analyse Firestore...");
+  try {
+    await addDoc(collection(db, "analyses"), {
+      userId: utilisateurConnecte.uid,
+      nom: data.nom,
+      type: data.type,
+      taille: data.taille,
+      typeDocument,
+      organisme,
+      dateImportante,
+      montant,
+      urgence,
+      actions,
+      resume,
+      analyseComplete: analyse,
+      createdAt: new Date()
+    });
 
-if (utilisateurConnecte) {
-  await addDoc(collection(db, "analyses"), {
-    userId: utilisateurConnecte.uid,
-    email: utilisateurConnecte.email,
-    nom: data.nom,
-    type: data.type,
-    taille: data.taille,
-    typeDocument,
-    organisme,
-    dateImportante,
-    montant,
-    urgence,
-    actions,
-    resume,
-    analyseComplete: analyse,
-    createdAt: new Date()
-  });
-
-  console.log("Analyse sauvegardée !");
-}
-
-afficherNotification("Document envoyé au serveur.");
+    afficherNotification("Analyse terminée et sauvegardée.");
+  } catch (error) {
+    console.error("Erreur sauvegarde analyse :", error);
+    afficherNotification("Analyse terminée, mais non sauvegardée.");
+  }
 };
 
 
@@ -1274,31 +1265,31 @@ async function chargerAnalyses() {
       carte.className = "analyse-card";
 
       carte.innerHTML = `
-        <h3>📄 ${data.typeDocument || "Document"}</h3>
+        <h3>📄 ${echapperHTML(data.typeDocument || "Document")}</h3>
 
         <p>
           <strong>Organisme :</strong>
-          ${data.organisme || "Non détecté"}
+          ${echapperHTML(data.organisme || "Non détecté")}
         </p>
 
         <p>
           <strong>Date :</strong>
-          ${data.dateImportante || "Non détectée"}
+          ${echapperHTML(data.dateImportante || "Non détectée")}
         </p>
 
         <p>
           <strong>Montant :</strong>
-          ${data.montant || "Non détecté"}
+          ${echapperHTML(data.montant || "Non détecté")}
         </p>
 
         <p>
           <strong>Urgence :</strong>
-          ${data.urgence || "Non détectée"}
+          ${echapperHTML(data.urgence || "Non détectée")}
         </p>
 
         <div class="analyse-actions">
 
-  <button onclick="voirAnalyse('${analyseId}')">
+  <button onclick="voirAnalyse('${echapperHTML(analyseId)}')">
     👁️ Voir analyse
   </button>
 
@@ -1328,7 +1319,7 @@ async function chargerAnalyses() {
 
   <!-- Suppression -->
   <button
-    onclick="supprimerAnalyse('${analyseId}')"
+    onclick="supprimerAnalyse('${echapperHTML(analyseId)}')"
     class="btn-delete"
   >
     🗑️ Supprimer
@@ -1351,25 +1342,16 @@ if (boutonIA) {
       const selectTon = carte.querySelector(".select-ton-ia");
       const tonChoisi = selectTon?.value || "professionnel";
 
-      const response = await fetch(
-        `${API_URL}/generer-reponse-ia`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            document:
-              data.analyseComplete ||
-              data.resume ||
-              data.actions ||
-              "",
-            ton: tonChoisi,
-          }),
-        }
-      );
-
-      const resultat = await response.json();
+      const resultat = await appelerAPI("/generer-reponse-ia", {
+        body: {
+          document:
+            data.analyseComplete ||
+            data.resume ||
+            data.actions ||
+            "",
+          ton: tonChoisi,
+        },
+      });
 
       if (!resultat.reponse) {
         throw new Error("Réponse IA invalide");
@@ -1378,7 +1360,7 @@ if (boutonIA) {
       afficherModalReponseIA(resultat.reponse);
     } catch (error) {
       console.error("Erreur réponse IA :", error);
-      afficherToast("❌ Erreur génération IA", "error");
+      afficherToast(`❌ ${echapperHTML(error.message || "Erreur génération IA")}`, "error");
     } finally {
       boutonIA.disabled = false;
       boutonIA.textContent = "🤖 Générer une réponse IA";
@@ -1512,15 +1494,15 @@ window.voirAnalyse = async function (id) {
       <div class="analyse-section">
         <h3>📁 Informations document</h3>
 
-        <p><strong>Type :</strong> ${data.typeDocument || "Non détecté"}</p>
-        <p><strong>Organisme :</strong> ${data.organisme || "Non détecté"}</p>
-        <p><strong>Date :</strong> ${data.dateImportante || "Non détectée"}</p>
-        <p><strong>Montant :</strong> ${data.montant || "Non détecté"}</p>
+        <p><strong>Type :</strong> ${echapperHTML(data.typeDocument || "Non détecté")}</p>
+        <p><strong>Organisme :</strong> ${echapperHTML(data.organisme || "Non détecté")}</p>
+        <p><strong>Date :</strong> ${echapperHTML(data.dateImportante || "Non détectée")}</p>
+        <p><strong>Montant :</strong> ${echapperHTML(data.montant || "Non détecté")}</p>
 
         <p>
           <strong>Urgence :</strong>
           <span class="urgence-badge">
-            ${data.urgence || "Moyenne"}
+            ${echapperHTML(data.urgence || "Moyenne")}
           </span>
         </p>
       </div>
@@ -1528,14 +1510,14 @@ window.voirAnalyse = async function (id) {
       <div class="analyse-section">
         <h3>✅ Actions recommandées</h3>
         <div class="analyse-actions-text">
-          ${(data.actions || "Aucune action recommandée").replace(/\n/g, "<br>")}
+          ${texteMultiligne(data.actions || "Aucune action recommandée")}
         </div>
       </div>
 
       <div class="analyse-section">
         <h3>🧠 Résumé IA</h3>
         <div class="analyse-resume">
-          ${(data.resume || "Aucun résumé disponible").replace(/\n/g, "<br>")}
+          ${texteMultiligne(data.resume || "Aucun résumé disponible")}
         </div>
       </div>
     `;
@@ -1610,7 +1592,7 @@ window.telechargerReponseIAPDF = function () {
 
       <body>
         <h1>🤖 Réponse IA AdminFacile</h1>
-        <div class="contenu">${texte}</div>
+        <div class="contenu">${echapperHTML(texte)}</div>
 
         <script>
           window.onload = function () {
@@ -1644,32 +1626,22 @@ window.poserQuestionDocument = async function () {
 
     messages.innerHTML += `
       <div class="chat-user">
-        👤 ${question}
+        👤 ${texteMultiligne(question)}
       </div>
     `;
 
     input.value = "";
 
-    const response = await fetch(
-      `${API_URL}/chat-document`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          question,
-          analyse: analyseCourante,
-        }),
-      }
-    );
-
-    const data = await response.json();
+    const data = await appelerAPI("/chat-document", {
+      body: {
+        question,
+        analyse: analyseCourante,
+      },
+    });
 
     messages.innerHTML += `
       <div class="chat-ai">
-        🤖 ${data.reponse}
+        🤖 ${texteMultiligne(data.reponse)}
       </div>
     `;
 
@@ -1681,8 +1653,6 @@ window.poserQuestionDocument = async function () {
         question,
         reponse: data.reponse,
 
-        analyse: analyseCourante,
-
         createdAt: new Date(),
       });
 
@@ -1692,6 +1662,6 @@ window.poserQuestionDocument = async function () {
     messages.scrollTop = messages.scrollHeight;
   } catch (error) {
     console.error(error);
-    afficherNotification("Erreur chat IA.");
+    afficherNotification(error.message || "Erreur chat IA.");
   }
 };
