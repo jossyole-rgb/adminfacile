@@ -282,6 +282,12 @@ window.genererLettre = async function () {
 
     const data = await reponse.json();
 
+     if (!reponse.ok) {
+  throw new Error(
+    data.error || "Erreur lors de la génération de la lettre."
+  );
+}
+
     if (!data.lettre) {
       throw new Error("Aucune lettre reçue.");
     }
