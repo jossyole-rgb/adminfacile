@@ -30,7 +30,11 @@ Procédure proposée :
    - Dans `script.js`, `API_URL` pointe vers l'API de test (à rendre configurable par environnement).
    - Exécuter la recette `docs/TESTS_ET_RECETTE.md`.
 2. **Sauvegarde Firestore** avant mise en production : `gcloud firestore export gs://<bucket>/backup-<date>`.
-3. **Règles Firestore** : `firebase deploy --only firestore:rules --project adminfacile` (après relecture ; réversible en redéployant les anciennes règles, à exporter d'abord depuis la console).
+3. **Règles Firestore** (validé par Joss le 13/10/2026). Les règles sont compatibles avec le frontend actuellement en production : elles peuvent être publiées dès maintenant, indépendamment de l'API.
+   - **Avant :** console Firebase → Firestore Database → Règles → copier les règles actuelles dans un fichier (retour arrière).
+   - **Option console :** coller le contenu de `firestore.rules` → « Publier ».
+   - **Option ligne de commande :** `npx firebase login` puis `npm run deploy:regles`.
+   - **Après :** vérifier la connexion, la génération, l'historique et les analyses ; dans le simulateur de règles de la console, vérifier qu'une mise à jour de `users/{uid}` avec `premium: true` est refusée.
 4. **API Render** puis **frontend Netlify**, l'un juste après l'autre (aucun ordre n'est compatible à 100 % : l'ancien frontend avec la nouvelle API perd les fonctions IA hors génération ; le nouveau frontend avec l'ancienne API perd « Passer Premium » et « Gérer mon abonnement »). Prévoir un créneau de faible trafic.
 5. **Stripe** : vérifier que le webhook est abonné à `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
 6. Vérifier `GET /api/health`, une génération, un Checkout en mode test.

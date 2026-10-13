@@ -8,7 +8,8 @@
     "test": "node --test backend/tests/*.test.js",
     "test:emulateur": "firebase emulators:exec --only firestore --project demo-adminfacile \"node --test --test-concurrency=1 backend/tests/emulateur/*.test.js\"",
     "test:tout": "npm test && npm run test:interface && npm run test:emulateur",
-    "test:interface": "node --test --test-concurrency=1 tests-frontend/*.test.js"
+    "test:interface": "node --test --test-concurrency=1 tests-frontend/*.test.js",
+    "deploy:regles": "firebase deploy --only firestore:rules --project adminfacile"
   },
   "dependencies": {
     "compression": "^1.8.1",

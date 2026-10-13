@@ -50,6 +50,11 @@ Chaque décision indique son contexte, le choix retenu et ses conséquences. Les
 - Lecture/suppression d'une lettre d'un autre → 404 (pas de 403, pour ne pas révéler son existence).
 - Les règles Firestore autorisent encore la création de lettres par le navigateur (compatibilité avec l'ancien frontend pendant la transition) ; à retirer après la mise en production du nouveau frontend.
 
+### D-13 · Frontend en modules ES
+- **Choix :** `script.js` devient un simple point d'entrée qui importe `js/ui.js`, `js/api.js`, `js/auth.js`, `js/letters.js`, `js/dashboard.js`, `js/billing.js`, `js/assistant.js`, `js/documents.js` ; l'état de session est partagé via `js/etat.js`. Les pages HTML ne changent pas (toujours `script.js`), Netlify sert `js/` depuis la racine, sans outil de build.
+- Les fonctions appelées par les `onclick` restent exposées sur `window` ; un test d'interface vérifie qu'elles existent toutes et qu'aucune erreur JavaScript ne survient au chargement.
+- Le déplacement de tous les fichiers dans `frontend/` reste reporté (changement du dossier de publication Netlify).
+
 ### D-11 · Tests
 - `node:test` + `supertest` (aucun framework lourd) ; émulateur Firestore via `firebase-tools` ; Playwright pour l'interface avec Firebase/API/CDN simulés.
 
@@ -57,7 +62,7 @@ Chaque décision indique son contexte, le choix retenu et ses conséquences. Les
 
 | ID | Sujet | Proposition par défaut |
 |---|---|---|
-| P-01 | Déployer `firestore.rules` en production | Oui, en même temps que le nouveau frontend (voir DEPLOIEMENT) |
+| P-01 | Déployer `firestore.rules` en production | **Validé par Joss (13/10/2026)** ; publication à faire par Joss (identifiants requis) |
 | P-02 | Paiement échoué : retirer le Premium immédiatement (actuel) ou attendre la fin des relances Stripe (`past_due` → `canceled`) | Garder l'actuel jusqu'à décision |
 | P-03 | Quota serveur de l'assistant IA (CHAT-02) : nombre de messages gratuits et période | 5 messages / jour en gratuit |
 | P-04 | Durée de conservation des analyses et conversations (DOC-06, RGPD) | À définir avec validation juridique |

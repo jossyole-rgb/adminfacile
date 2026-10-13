@@ -5,7 +5,7 @@
 | Commande | Contenu | Prérequis |
 |---|---|---|
 | `npm test` | Tests API et services (70) — faux services, aucun réseau | Node ≥ 20 |
-| `npm run test:interface` | Tests navigateur Chromium (11) — Firebase, API et CDN simulés | Playwright 1.56 + Chromium (`npx playwright install chromium` en local) |
+| `npm run test:interface` | Tests navigateur Chromium (12, + contrôle d'absence d'erreur JavaScript à chaque test) — Firebase, API et CDN simulés | Playwright 1.56 + Chromium (`npx playwright install chromium` en local) |
 | `npm run test:emulateur` | Règles Firestore (31) + quota, webhooks et historique sur Firestore réel (18) | Java 11+, `firebase-tools` (devDependency) |
 | `npm run test:tout` | Les trois suites | — |
 
@@ -13,12 +13,12 @@ Aucun test n'utilise de clé réelle, de vrai paiement ni la base de production 
 
 ## Dernière exécution
 
-**13 octobre 2026**, Node 22.22, Java disponible (lot historique T8) :
+**13 octobre 2026**, Node 22.22, Java disponible (lot modules T9) :
 
 | Suite | Résultat |
 |---|---|
 | `npm test` | 70 / 70 réussis |
-| `npm run test:interface` | 11 / 11 réussis |
+| `npm run test:interface` | 12 / 12 réussis |
 | `npm run test:emulateur` | 49 / 49 réussis |
 
 Contrôle de pertinence : les tests d'interface « XSS » et « Passer Premium » **échouent** sur l'ancien `script.js` et réussissent sur le nouveau.

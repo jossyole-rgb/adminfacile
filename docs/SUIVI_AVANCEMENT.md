@@ -4,10 +4,10 @@ Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 
 ## État au 13 octobre 2026
 
-- **Dernière tâche terminée :** T8 — Historique des lettres via l'API, paginé.
-- **Prochaine tâche :** T9 — Modularisation de `script.js` (`js/api.js`, `js/letters.js`…), puis T10 `API_URL` par environnement.
+- **Dernière tâche terminée :** T9 — Découpage de `script.js` en modules ES.
+- **Prochaine tâche :** T5 — publication des règles Firestore par Joss (identifiants Firebase requis), puis T10 `API_URL` par environnement et environnement de test.
 - **Fichiers modifiés :** `server.js`, `script.js`, `dashboard.html`, `package.json`, `package-lock.json`, `.gitignore` ; nouveaux : `backend/**`, `tests-frontend/**`, `firestore.rules`, `firebase.json`, `.env.example`, `docs/**`.
-- **Tests validés :** `npm test` 70/70, `npm run test:interface` 11/11, `npm run test:emulateur` 49/49.
+- **Tests validés :** `npm test` 70/70, `npm run test:interface` 12/12, `npm run test:emulateur` 49/49.
 - **Blocages :**
   - B1 — ~~Push GitHub refusé~~ résolu le 13 octobre 2026 : commits poussés sur `develop`.
   - B2 — Configuration Firebase/Stripe/Render non accessible : points « À confirmer » de l'audit.
@@ -35,10 +35,10 @@ Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 - **Fichiers :** `backend/services/comptes.js`, `backend/routes/ia.js`, `script.js`.
 - **Tests :** concurrence 20 requêtes sur émulateur, échec IA, Premium, past_due, comptes existants. **Résultat :** réussi.
 
-### T5 · Règles Firestore (A05) — Bloqué (validation de déploiement)
+### T5 · Règles Firestore (A05) — Bloqué (identifiants Firebase)
 - **Fichiers :** `firestore.rules`, `firebase.json`, `backend/tests/emulateur/regles.test.js`.
 - **Tests :** 31 tests d'isolation. **Résultat :** réussi sur émulateur.
-- **Restant :** comparer avec les règles en production puis déployer (P-01).
+- **Restant :** déploiement validé par Joss le 13/10/2026, mais l'environnement de Claude n'a aucun identifiant Firebase : publication par Joss via la console ou `npm run deploy:regles` (procédure dans `docs/DEPLOIEMENT.md`). Compatibles avec le frontend en production.
 
 ### T6 · Dépendances (A13) — Terminé
 - **Modifications :** `npm audit fix` sans rupture (multer 2.4.0, compression 1.8.2, express 4.22.3, firebase-admin 13.10.0…).
@@ -55,7 +55,11 @@ Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 - **Modifications :** `GET /api/letters`, `GET/DELETE /api/letters/:id` ; lettre enregistrée par le serveur à la génération ; interface : « Ouvrir », « Afficher plus », confirmation avant suppression ; compteur du tableau de bord via l'API.
 - **Tests :** 11 API, 3 émulateur, 3 navigateur. **Résultat :** réussi.
 - **Restant :** retirer l'écriture de lettres par le navigateur des règles Firestore après la mise en production (D-12).
-### T9 · Modularisation de `script.js` — À faire
+### T9 · Modularisation de `script.js` — Terminé
+- **Objectif :** séparer les responsabilités du frontend (architecture cible du cahier des charges).
+- **Fichiers :** `script.js` (point d'entrée), `js/etat.js`, `ui.js`, `api.js`, `auth.js`, `letters.js`, `dashboard.js`, `billing.js`, `assistant.js`, `documents.js`.
+- **Modifications :** découpage sans changement de comportement ; état partagé explicite ; pages HTML inchangées.
+- **Tests :** 12 tests navigateur (dont chargement sans erreur et existence de toutes les fonctions `onclick`), ESLint `no-undef` sans erreur. **Résultat :** réussi.
 ### T10 · `API_URL` par environnement + environnement de test — À faire
 ### T11 · Quota serveur de l'assistant — À faire (décision P-03)
 ### T12 · Accessibilité et responsive — À faire

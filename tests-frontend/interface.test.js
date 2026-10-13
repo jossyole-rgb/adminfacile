@@ -51,6 +51,7 @@ let navigateur;
 let page;
 let requetesAPI;
 let reponsesAPI;
+let erreursPage;
 
 function servirFichiers(req, res) {
   const chemin = path.join(RACINE, decodeURIComponent(req.url.split("?")[0]));
@@ -84,6 +85,8 @@ beforeEach(async () => {
   };
 
   page = await navigateur.newPage();
+  erreursPage = [];
+  page.on("pageerror", (erreur) => erreursPage.push(erreur.message));
 
   const module = (body) => ({ status: 200, contentType: "text/javascript", body });
 
@@ -119,6 +122,19 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await page.close();
+  // Aucune erreur JavaScript non interceptée (modules introuvables, variables non définies…).
+  assert.deepEqual(erreursPage, []);
+});
+
+test("toutes les fonctions appelées par les boutons de la page existent", async () => {
+  const manquantes = await page.evaluate(() =>
+    [...document.querySelectorAll("[onclick]")]
+      .map((el) => el.getAttribute("onclick").match(/^\s*([\w]+)\(/))
+      .filter(Boolean)
+      .map((m) => m[1])
+      .filter((nom) => typeof window[nom] !== "function")
+  );
+  assert.deepEqual(manquantes, []);
 });
 
 test("le quota affiché vient du serveur (/api/me) avec le token", async () => {
@@ -155,7 +171,8 @@ test("quota atteint (402) : message clair, aucun enregistrement", async () => {
 
   await page.waitForFunction(() => document.getElementById("resultat").innerText.includes("Limite gratuite atteinte"));
   assert.equal(await page.evaluate(() => window.__ajouts || 0), 0);
-  assert.equal(await page.isEnabled("#btnGenerer"), true);
+  // Le bouton est réactivé une fois le tableau de bord rafraîchi.
+  await page.waitForFunction(() => !document.getElementById("btnGenerer").disabled);
 });
 
 test("erreur réseau : message lisible et bouton réactivé", async () => {
