@@ -4,22 +4,22 @@
 
 | Commande | Contenu | Prérequis |
 |---|---|---|
-| `npm test` | Tests API et services (59) — faux services, aucun réseau | Node ≥ 20 |
-| `npm run test:interface` | Tests navigateur Chromium (8) — Firebase, API et CDN simulés | Playwright 1.56 + Chromium (`npx playwright install chromium` en local) |
-| `npm run test:emulateur` | Règles Firestore (31) + quota et webhooks sur Firestore réel (15) | Java 11+, `firebase-tools` (devDependency) |
+| `npm test` | Tests API et services (70) — faux services, aucun réseau | Node ≥ 20 |
+| `npm run test:interface` | Tests navigateur Chromium (11) — Firebase, API et CDN simulés | Playwright 1.56 + Chromium (`npx playwright install chromium` en local) |
+| `npm run test:emulateur` | Règles Firestore (31) + quota, webhooks et historique sur Firestore réel (18) | Java 11+, `firebase-tools` (devDependency) |
 | `npm run test:tout` | Les trois suites | — |
 
 Aucun test n'utilise de clé réelle, de vrai paiement ni la base de production (projet `demo-adminfacile` sur émulateur).
 
 ## Dernière exécution
 
-**13 octobre 2026**, Node 22.22, Java disponible, commit `beeed0b` :
+**13 octobre 2026**, Node 22.22, Java disponible (lot historique T8) :
 
 | Suite | Résultat |
 |---|---|
-| `npm test` | 59 / 59 réussis |
-| `npm run test:interface` | 8 / 8 réussis |
-| `npm run test:emulateur` | 46 / 46 réussis |
+| `npm test` | 70 / 70 réussis |
+| `npm run test:interface` | 11 / 11 réussis |
+| `npm run test:emulateur` | 49 / 49 réussis |
 
 Contrôle de pertinence : les tests d'interface « XSS » et « Passer Premium » **échouent** sur l'ancien `script.js` et réussissent sur le nouveau.
 
@@ -35,6 +35,7 @@ Contrôle de pertinence : les tests d'interface « XSS » et « Passer Premium �
 | DOC-01/02 fichiers | type interdit, taille > 8 Mo, exécutable déguisé, PNG déclaré PDF, PDF illisible, sans fichier |
 | BILLING-01/02 | Checkout/portail fondés sur le token ; client existant réutilisé ; 409 si Premium ; 404 sans client |
 | BILLING-03/04/05 | signature invalide, doublon, désordre, impayé, annulation, réactivation, `metadata.uid` |
+| LETTER-05 historique | API : pagination bornée, 404 croisé ; émulateur : tri anciennes/nouvelles lettres, propriété ; UI : échappement, « Afficher plus », suppression confirmée |
 | Erreurs réseau (UI) | `interface.test.js` : coupure réseau → message lisible, bouton réactivé |
 | XSS (UI) | `interface.test.js` : HTML dans réponse IA et question affiché en texte |
 
@@ -55,6 +56,7 @@ Prérequis : API de test déployée avec des clés **Stripe test** et un projet 
 | R2 | Vérifier l'email, générer 3 lettres | 3 lettres affichées et sauvegardées ; compteur 2 → 1 → 0 | |
 | R3 | Générer une 4e lettre | Message « Limite gratuite atteinte » | |
 | R4 | Supprimer une lettre puis regénérer | Toujours bloqué (D-03) | |
+| R4b | Historique avec plus de 10 lettres (compte Premium), dont des lettres créées avant la mise à jour | Ordre du plus récent au plus ancien, bouton « Afficher plus », ouverture et suppression | |
 | R5 | Appeler `/generer-lettre` sans token (curl) | 401 | |
 | R6 | Copier, télécharger TXT, PDF et DOCX une lettre avec accents et « € » | Fichiers lisibles, accents corrects | |
 | R7 | Résumer et réécrire une lettre (5 styles) | Texte remplacé ; en cas d'erreur, la lettre d'origine revient | |

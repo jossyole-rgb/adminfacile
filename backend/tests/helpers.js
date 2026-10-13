@@ -77,7 +77,33 @@ function creerFauxServices(surcharges = {}) {
     },
   };
 
-  return { services: { ia, comptes, facturation, documents }, appels, quota };
+  const enregistrees = [];
+
+  const lettres = {
+    async enregistrer(uid, lettre) {
+      if (surcharges.sauvegardeEchoue) throw new Error("Firestore indisponible");
+      enregistrees.push({ uid, ...lettre });
+      return `lettre-${enregistrees.length}`;
+    },
+    async lister(uid, options) {
+      appels.push({ methode: "listerLettres", args: [uid, options] });
+      return { lettres: [], total: 0, suivant: null };
+    },
+    async lire(uid, id) {
+      if (id !== "lettre-alice" || uid !== "alice") {
+        throw Object.assign(new Error("Lettre introuvable."), { status: 404, code: "NOT_FOUND", expose: true });
+      }
+      return { id, contenu: "Contenu" };
+    },
+    async supprimer(uid, id) {
+      appels.push({ methode: "supprimerLettre", args: [uid, id] });
+      if (id !== "lettre-alice" || uid !== "alice") {
+        throw Object.assign(new Error("Lettre introuvable."), { status: 404, code: "NOT_FOUND", expose: true });
+      }
+    },
+  };
+
+  return { services: { ia, comptes, facturation, documents, lettres }, appels, quota, enregistrees };
 }
 
 function creerAppTest(options = {}) {

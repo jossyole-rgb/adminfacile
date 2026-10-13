@@ -17,7 +17,7 @@
 | Priorité | Total | Corrigés | Partiels | Ouverts |
 |---|---|---|---|---|
 | P0 | 6 | 5 | 1 (règles à déployer) | 0 |
-| P1 | 15 | 9 | 2 | 4 |
+| P1 | 15 | 10 | 2 | 3 |
 | P2 | 9 | 3 | 0 | 6 |
 
 ## P0 — Critique
@@ -78,12 +78,12 @@
 | A09 | Aucune limite de taille des champs envoyés à l'IA ; ton libre injecté dans le prompt | `server.js` | Vérifié | Validation (`backend/middleware/validation.js`), listes fermées de types/tons/styles, données encadrées `<donnees_utilisateur>` | Corrigé |
 | A10 | Erreurs : `analyserDocument` sans `try/catch` (interface bloquée), chat affichant `undefined`, fuite `error.message` Stripe | `script.js`, `server.js` | Vérifié | Gestionnaire d'erreurs centralisé, messages français, test navigateur erreur réseau | Corrigé |
 | A11 | Scripts importés deux fois dans `dashboard.html` | `dashboard.html` | Vérifié (sans double exécution : un module ES n'est évalué qu'une fois) | Doublon supprimé | Corrigé |
-| A12 | Aucun test ni commande `npm test` | `package.json` | Vérifié | 113 tests (API, services, émulateur, navigateur) | Corrigé |
+| A12 | Aucun test ni commande `npm test` | `package.json` | Vérifié | 130 tests (API, services, émulateur, navigateur) | Corrigé |
 | A13 | Dépendances vulnérables : 22 en production dont 2 critiques | `package-lock.json` | Vérifié (`npm audit`) | `npm audit fix` sans rupture → 8 modérées restantes (`uuid` via `google-gax`) | Partiel |
 | A14 | Prompts poussant à des lettres « juridiquement correctes », sans consigne contre l'invention de faits | `server.js` | Vérifié | Règles de fiabilité dans tous les prompts, champs `[à compléter]`, section `POINTS_A_VERIFIER` | Corrigé |
 | A15 | Vérification d'email appliquée seulement dans le navigateur | `script.js` | Vérifié | Exigée côté serveur pour la génération et le Checkout | Corrigé |
 | A16 | Quota du chat IA (5 messages) seulement dans le navigateur, remis à zéro au rechargement | `script.js` | Vérifié | Atténué par une limite par utilisateur (30 requêtes IA / 15 min) ; quota serveur à définir (CHAT-02) | Partiel |
-| A17 | Historique non paginé, relu en entier à chaque affichage | `script.js` | Vérifié | À faire : API `/api/letters` paginée (LETTER-05) | Ouvert |
+| A17 | Historique non paginé, relu en entier à chaque affichage ; lettres écrites par le navigateur | `script.js` | Vérifié | API `/api/letters` (liste paginée, détail, suppression, contrôle de propriété) ; lettres enregistrées par le serveur ; tests API, émulateur, navigateur | Corrigé |
 | A18 | Pas de suppression de compte ni de politique de conservation des documents/analyses | — | Vérifié | À faire après décision sur la durée de conservation (AUTH-05, DOC-06) | Ouvert |
 | A19 | OCR Tesseract exécuté dans le processus web | `server.js` | Vérifié ; impact réel **à confirmer** sous charge | Limité par auth + débit ; à évaluer : délai maximal, file d'attente | Ouvert |
 | A20 | Accessibilité : champs sans libellé (chat, upload), `prompt()`/`alert()`, boutons à emoji seuls | `dashboard.html`, `script.js` | Vérifié | Phase 5 (UI) | Ouvert |

@@ -8,6 +8,7 @@ const assert = require("node:assert/strict");
 const admin = require("firebase-admin");
 const { creerServiceComptes } = require("../../services/comptes");
 const { creerServiceFacturation } = require("../../services/facturation");
+const { creerServiceLettres } = require("../../services/lettres");
 const { chargerConfig } = require("../../config");
 const { silencieux } = require("../helpers");
 
@@ -213,5 +214,47 @@ describe("Facturation Stripe (Firestore réel, Stripe simulé)", () => {
 
     await db.doc("users/vip").set({ stripeCustomerId: "cus_vip", premium: true, subscriptionStatus: "active" });
     await assert.rejects(facturation.creerSessionCheckout({ uid: "vip", email: "v@example.test" }), (e) => e.status === 409);
+  });
+});
+
+describe("Historique des lettres (Firestore réel)", () => {
+  test("liste triée (anciennes et nouvelles lettres), paginée, limitée au propriétaire", async () => {
+    const lettres = creerServiceLettres(db);
+
+    await db.collection("lettres").doc("ancienne").set({ userId: "alice", type: "caf", contenu: "A", date: "02/01/2025" });
+    await db.collection("lettres").doc("plus-ancienne").set({ userId: "alice", type: "apl", contenu: "B", date: "15/12/2024" });
+    await db.collection("lettres").doc("de-bob").set({ userId: "bob", type: "caf", contenu: "secret", date: "01/01/2026" });
+    const recente = await lettres.enregistrer("alice", { type: "stage", contenu: "C", nom: "Alice", destinataire: "Entreprise" });
+
+    const page1 = await lettres.lister("alice", { limite: 2, decalage: 0 });
+    assert.equal(page1.total, 3);
+    assert.deepEqual(page1.lettres.map((l) => l.id), [recente, "ancienne"]);
+    assert.equal(page1.suivant, 2);
+    assert.equal(page1.lettres[0].contenu, undefined, "la liste ne renvoie qu'un aperçu");
+
+    const page2 = await lettres.lister("alice", { limite: 2, decalage: 2 });
+    assert.deepEqual(page2.lettres.map((l) => l.id), ["plus-ancienne"]);
+    assert.equal(page2.suivant, null);
+  });
+
+  test("lecture et suppression refusées sur la lettre d'un autre", async () => {
+    const lettres = creerServiceLettres(db);
+    await db.collection("lettres").doc("de-bob").set({ userId: "bob", contenu: "secret" });
+
+    await assert.rejects(lettres.lire("alice", "de-bob"), (e) => e.status === 404);
+    await assert.rejects(lettres.supprimer("alice", "de-bob"), (e) => e.status === 404);
+    assert.equal((await db.doc("lettres/de-bob").get()).exists, true);
+
+    await lettres.supprimer("bob", "de-bob");
+    assert.equal((await db.doc("lettres/de-bob").get()).exists, false);
+  });
+
+  test("lecture complète de sa propre lettre", async () => {
+    const lettres = creerServiceLettres(db);
+    const id = await lettres.enregistrer("alice", { type: "caf", contenu: "Texte complet", nom: "Alice", destinataire: "CAF" });
+
+    const lettre = await lettres.lire("alice", id);
+    assert.equal(lettre.contenu, "Texte complet");
+    assert.ok(lettre.createdAt > 0);
   });
 });

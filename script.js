@@ -334,16 +334,14 @@ window.genererLettre = async function () {
 
     activerBoutonsLettre(true);
 
-    await sauvegarderLettre({
-      type,
-      contenu: data.lettre,
-      nom,
-      destinataire
-    });
+    // La lettre est enregistrée dans l'historique par le serveur.
+    afficherNotification(
+      data.sauvegardee
+        ? "Lettre générée et sauvegardée dans l’historique."
+        : "Lettre générée, mais non sauvegardée : pense à la copier."
+    );
 
     await mettreAJourDashboard();
-
-    afficherNotification("Lettre générée avec succès.");
   } catch (error) {
     console.error("Erreur génération :", error);
 
@@ -395,30 +393,6 @@ function texteResultatEstVide(texte) {
     texte.includes("Limite gratuite atteinte") ||
     texte.includes("Erreur lors de la génération")
   );
-}
-
-
-/* =========================
-   SAUVEGARDE FIRESTORE
-========================= */
-
-async function sauvegarderLettre({ type, contenu, nom, destinataire }) {
-  try {
-    await addDoc(collection(db, "lettres"), {
-      type,
-      contenu,
-      nom,
-      destinataire,
-      date: new Date().toLocaleDateString(),
-      userId: utilisateurConnecte.uid,
-      email: utilisateurConnecte.email
-    });
-
-    afficherNotification("Lettre sauvegardée dans l’historique.");
-  } catch (error) {
-    console.error("Erreur Firestore :", error);
-    afficherNotification("Lettre générée, mais non sauvegardée.");
-  }
 }
 
 
@@ -600,17 +574,12 @@ window.reecrireLettre = async function (style) {
    HISTORIQUE DES LETTRES
 ========================= */
 
+const TAILLE_PAGE_HISTORIQUE = 10;
+let decalageHistorique = 0;
+
 window.telechargerLettreHistorique = async function (id) {
   try {
-    const lettreRef = doc(db, "lettres", id);
-    const lettreSnap = await getDoc(lettreRef);
-
-    if (!lettreSnap.exists()) {
-      afficherNotification("Lettre introuvable.");
-      return;
-    }
-
-    const lettre = lettreSnap.data();
+    const lettre = await appelerAPI(`/api/letters/${encodeURIComponent(id)}`, { method: "GET" });
     const contenu = lettre.contenu || "";
 
     if (!contenu.trim()) {
@@ -628,14 +597,59 @@ window.telechargerLettreHistorique = async function (id) {
     afficherNotification("Lettre téléchargée.");
   } catch (error) {
     console.error("Erreur téléchargement historique :", error);
-    afficherNotification("Erreur téléchargement.");
+    afficherNotification(error.message || "Erreur téléchargement.");
   }
 };
 
-window.chargerHistorique = async function () {
+window.afficherLettreHistorique = async function (id) {
+  try {
+    const lettre = await appelerAPI(`/api/letters/${encodeURIComponent(id)}`, { method: "GET" });
+
+    document.getElementById("resultat").innerText = lettre.contenu || "";
+    activerBoutonsLettre(Boolean(lettre.contenu));
+    document.getElementById("resultat").scrollIntoView({ behavior: "smooth" });
+
+    afficherNotification("Lettre ouverte : tu peux la copier ou l’exporter.");
+  } catch (error) {
+    console.error("Erreur ouverture lettre :", error);
+    afficherNotification(error.message || "Erreur ouverture lettre.");
+  }
+};
+
+function carteLettre(lettre) {
+  const id = echapperHTML(lettre.id);
+
+  return `
+    <div class="lettre-card">
+      <div class="lettre-header">
+        <h3>${echapperHTML(lettre.type)}</h3>
+
+        <button onclick="afficherLettreHistorique('${id}')">
+          👁️ Ouvrir
+        </button>
+
+        <button onclick="telechargerLettreHistorique('${id}')">
+          📥 Télécharger
+        </button>
+
+        <button class="btn-supprimer" onclick="supprimerLettre('${id}')">
+          🗑️ Supprimer
+        </button>
+      </div>
+
+      <small>${echapperHTML(lettre.date)}${lettre.destinataire ? " · " + echapperHTML(lettre.destinataire) : ""}</small>
+      <p>${texteMultiligne(lettre.apercu)}${lettre.apercu && lettre.apercu.length >= 280 ? "…" : ""}</p>
+    </div>
+  `;
+}
+
+window.chargerHistorique = async function (suite = false) {
   const historique = document.getElementById("historique");
 
-  historique.innerHTML = "Chargement de l’historique...";
+  if (!suite) {
+    decalageHistorique = 0;
+    historique.innerHTML = "Chargement de l’historique...";
+  }
 
   try {
     if (!utilisateurConnecte) {
@@ -644,16 +658,18 @@ window.chargerHistorique = async function () {
       return;
     }
 
-    const q = query(
-      collection(db, "lettres"),
-      where("userId", "==", utilisateurConnecte.uid)
+    const page = await appelerAPI(
+      `/api/letters?limit=${TAILLE_PAGE_HISTORIQUE}&offset=${decalageHistorique}`,
+      { method: "GET" }
     );
 
-    const querySnapshot = await getDocs(q);
+    document.getElementById("btnHistoriqueSuite")?.remove();
 
-    historique.innerHTML = "";
+    if (!suite) {
+      historique.innerHTML = "";
+    }
 
-    if (querySnapshot.empty) {
+    if (page.total === 0) {
       historique.innerHTML = `
         <div class="historique-vide">
           <h3>📭 Aucun historique</h3>
@@ -664,39 +680,25 @@ window.chargerHistorique = async function () {
       return;
     }
 
-    querySnapshot.forEach((document) => {
-      const lettre = document.data();
+    historique.insertAdjacentHTML("beforeend", page.lettres.map(carteLettre).join(""));
 
-      historique.innerHTML += `
-        <div class="lettre-card">
-          <div class="lettre-header">
-            <h3>${echapperHTML(lettre.type)}</h3>
+    if (page.suivant !== null) {
+      decalageHistorique = page.suivant;
+      historique.insertAdjacentHTML(
+        "beforeend",
+        `<button id="btnHistoriqueSuite" onclick="chargerHistorique(true)">
+          Afficher plus (${page.total - page.suivant} restantes)
+        </button>`
+      );
+    }
 
-            <button 
-              onclick="telechargerLettreHistorique('${echapperHTML(document.id)}')"
-            >
-              📥 Télécharger
-            </button>
-
-            <button 
-              class="btn-supprimer"
-              onclick="supprimerLettre('${echapperHTML(document.id)}')"
-            >
-              🗑️ Supprimer
-            </button>
-          </div>
-
-          <small>${echapperHTML(lettre.date)}</small>
-          <p>${texteMultiligne(lettre.contenu)}</p>
-        </div>
-      `;
-    });
-
-    afficherNotification("Historique chargé.");
+    if (!suite) {
+      afficherNotification("Historique chargé.");
+    }
   } catch (error) {
     console.error("Erreur historique :", error);
     historique.innerHTML = "Erreur lors du chargement de l’historique.";
-    afficherNotification("Erreur lors du chargement.");
+    afficherNotification(error.message || "Erreur lors du chargement.");
   }
 };
 
@@ -705,18 +707,20 @@ window.chargerHistorique = async function () {
    SUPPRESSION D’UNE LETTRE
 ========================= */
 
-window.supprimerLettre = async function (id) {
-  try {
-    await deleteDoc(doc(db, "lettres", id));
+window.supprimerLettre = function (id) {
+  window.ouvrirConfirmModal(async () => {
+    try {
+      await appelerAPI(`/api/letters/${encodeURIComponent(id)}`, { method: "DELETE" });
 
-    afficherNotification("Lettre supprimée.");
+      afficherNotification("Lettre supprimée.");
 
-    await chargerHistorique();
-    await mettreAJourDashboard();
-  } catch (error) {
-    console.error("Erreur suppression :", error);
-    afficherNotification("Erreur suppression.");
-  }
+      await chargerHistorique();
+      await mettreAJourDashboard();
+    } catch (error) {
+      console.error("Erreur suppression :", error);
+      afficherNotification(error.message || "Erreur suppression.");
+    }
+  }, "🗑️ Supprimer cette lettre ?");
 };
 
 
@@ -793,14 +797,13 @@ async function mettreAJourDashboard() {
     btnPasserPremium.style.display = utilisateurPremium ? "none" : "block";
   }
 
-  const q = query(
-    collection(db, "lettres"),
-    where("userId", "==", utilisateurConnecte.uid)
-  );
-
-  const querySnapshot = await getDocs(q);
-
-  nombreLettres.innerText = querySnapshot.size;
+  try {
+    const page = await appelerAPI("/api/letters?limit=1", { method: "GET" });
+    nombreLettres.innerText = page.total;
+  } catch (error) {
+    console.error("Erreur comptage lettres :", error);
+    nombreLettres.innerText = "–";
+  }
 
   if (utilisateurPremium) {
     limiteGratuite.innerText = "Illimité";
@@ -1421,11 +1424,16 @@ window.copierReponseIA = function () {
    MODAL CONFIRMATION SUPPRESSION
 ========================= */
 
-window.ouvrirConfirmModal = function (onConfirm) {
+window.ouvrirConfirmModal = function (onConfirm, titre = "🗑️ Supprimer cette analyse ?") {
   const modal = document.getElementById("confirmModal");
   const confirmBtn = document.getElementById("confirmDeleteBtn");
+  const titreModal = modal ? modal.querySelector("h3") : null;
 
   if (!modal || !confirmBtn) return;
+
+  if (titreModal) {
+    titreModal.textContent = titre;
+  }
 
   modal.style.display = "flex";
 

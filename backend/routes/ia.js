@@ -14,7 +14,7 @@ const MAX_LETTRE = 12000;
 const MAX_MESSAGE = 2000;
 const MAX_ANALYSE = 12000;
 
-function creerRoutesIA({ verifierUtilisateur, iaLimiter, ia, comptes, documents, config, logger = console }) {
+function creerRoutesIA({ verifierUtilisateur, iaLimiter, ia, comptes, documents, lettres, config, logger = console }) {
   const router = express.Router();
 
   const upload = multer({
@@ -71,14 +71,10 @@ function creerRoutesIA({ verifierUtilisateur, iaLimiter, ia, comptes, documents,
       });
     }
 
-    try {
-      const lettre = await ia.genererLettre(donnees);
+    let lettre;
 
-      return res.json({
-        lettre,
-        lettersUsed: reservation.utilisees,
-        lettersRemaining: reservation.premium ? null : Math.max(0, reservation.limite - reservation.utilisees),
-      });
+    try {
+      lettre = await ia.genererLettre(donnees);
     } catch (error) {
       // Échec de génération : la tentative n'est pas décomptée.
       await comptes.libererGeneration(uid).catch((e) =>
@@ -86,6 +82,29 @@ function creerRoutesIA({ verifierUtilisateur, iaLimiter, ia, comptes, documents,
       );
       return next(error);
     }
+
+    // La lettre est enregistrée par le serveur ; un échec d'enregistrement
+    // n'annule pas la génération (la lettre reste affichée et exportable).
+    let id = null;
+
+    try {
+      id = await lettres.enregistrer(uid, {
+        type: donnees.type,
+        contenu: lettre,
+        nom: donnees.nom,
+        destinataire: donnees.destinataire,
+      });
+    } catch (error) {
+      logger.error("Enregistrement de la lettre impossible :", error && error.message);
+    }
+
+    return res.json({
+      id,
+      sauvegardee: id !== null,
+      lettre,
+      lettersUsed: reservation.utilisees,
+      lettersRemaining: reservation.premium ? null : Math.max(0, reservation.limite - reservation.utilisees),
+    });
   }
 
   router.post("/generer-lettre", ...prive, exigerEmailVerifie, genererLettre);

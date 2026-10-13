@@ -80,6 +80,7 @@ beforeEach(async () => {
   requetesAPI = [];
   reponsesAPI = {
     "/api/me": { status: 200, body: { premium: false, lettersRemaining: 2, lettersUsed: 1, freeLimit: 3 } },
+    "/api/letters": { status: 200, body: { lettres: [], total: 0, suivant: null } },
   };
 
   page = await navigateur.newPage();
@@ -97,9 +98,12 @@ beforeEach(async () => {
 
     if (req.method() === "OPTIONS") return route.fulfill({ status: 204 });
 
-    requetesAPI.push({ chemin, methode: req.method(), headers: req.headers(), body: req.postData() });
+    requetesAPI.push({ chemin, recherche: new URL(req.url()).search, methode: req.method(), headers: req.headers(), body: req.postData() });
 
-    const reponse = reponsesAPI[chemin] || { status: 404, body: { error: "inconnu" } };
+    const reponse = reponsesAPI[`${req.method()} ${chemin}`] || reponsesAPI[chemin] || { status: 404, body: { error: "inconnu" } };
+    if (reponse.status === 204) {
+      return route.fulfill({ status: 204, headers: { "Access-Control-Allow-Origin": "*" } });
+    }
     return route.fulfill({
       status: reponse.status,
       contentType: "application/json",
@@ -210,4 +214,71 @@ test("analyse de document : erreur serveur affichée proprement", async () => {
   await page.waitForFunction(() => document.getElementById("analyseDocumentResultat").innerText.includes("ne correspond pas"));
   const appel = requetesAPI.find((r) => r.chemin === "/upload-document");
   assert.equal(appel.headers.authorization, "Bearer token-test-alice");
+});
+
+test("historique : chargé via l'API, échappé, paginé", async () => {
+  reponsesAPI["/api/letters"] = {
+    status: 200,
+    body: {
+      lettres: [{ id: "l1", type: "caf", date: "13/10/2026", destinataire: "CAF", apercu: "<script>window.__xss=2</script>Bonjour" }],
+      total: 2,
+      suivant: 1,
+    },
+  };
+
+  await page.click("button[onclick='chargerHistorique()']");
+  await page.waitForSelector(".lettre-card");
+
+  assert.equal(await page.evaluate(() => window.__xss), undefined);
+  assert.match(await page.locator(".lettre-card p").innerText(), /<script>/);
+  assert.match(await page.locator("#btnHistoriqueSuite").innerText(), /1 restantes/);
+
+  reponsesAPI["/api/letters"] = {
+    status: 200,
+    body: { lettres: [{ id: "l2", type: "apl", date: "01/01/2026", apercu: "Deuxième" }], total: 2, suivant: null },
+  };
+
+  await page.click("#btnHistoriqueSuite");
+  await page.waitForFunction(() => document.querySelectorAll(".lettre-card").length === 2);
+  assert.equal(await page.locator("#btnHistoriqueSuite").count(), 0);
+
+  const appels = requetesAPI.filter((r) => r.chemin === "/api/letters" && r.recherche.includes("limit=10"));
+  assert.deepEqual(appels.map((r) => r.recherche), ["?limit=10&offset=0", "?limit=10&offset=1"]);
+});
+
+test("historique : suppression après confirmation, via l'API avec token", async () => {
+  reponsesAPI["/api/letters"] = {
+    status: 200,
+    body: { lettres: [{ id: "l1", type: "caf", date: "13/10/2026", apercu: "Texte" }], total: 1, suivant: null },
+  };
+  reponsesAPI["DELETE /api/letters/l1"] = { status: 204 };
+
+  await page.click("button[onclick='chargerHistorique()']");
+  await page.waitForSelector(".lettre-card");
+  await page.click(".btn-supprimer");
+
+  assert.equal(await page.locator("#confirmModal h3").innerText(), "🗑️ Supprimer cette lettre ?");
+  assert.equal(requetesAPI.filter((r) => r.methode === "DELETE").length, 0, "rien n'est supprimé avant confirmation");
+
+  const attenteSuppression = page.waitForRequest((r) => r.method() === "DELETE");
+  await page.click("#confirmDeleteBtn");
+  await attenteSuppression;
+  // Après suppression, l'historique est rechargé.
+  await page.waitForFunction(() => document.getElementById("notification").innerText.includes("Historique chargé"));
+
+  const suppression = requetesAPI.find((r) => r.methode === "DELETE");
+  assert.equal(suppression.chemin, "/api/letters/l1");
+  assert.equal(suppression.headers.authorization, "Bearer token-test-alice");
+});
+
+test("lettre générée : plus d'écriture Firestore côté navigateur", async () => {
+  reponsesAPI["/generer-lettre"] = { status: 200, body: { id: "l9", sauvegardee: true, lettre: "Lettre." } };
+
+  await page.fill("#nom", "Alice");
+  await page.fill("#destinataire", "CAF");
+  await page.fill("#objet", "Objet");
+  await page.click("#btnGenerer");
+
+  await page.waitForFunction(() => document.getElementById("notification").innerText.includes("sauvegardée"));
+  assert.equal(await page.evaluate(() => window.__ajouts || 0), 0);
 });

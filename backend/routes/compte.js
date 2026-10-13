@@ -5,7 +5,7 @@
 const express = require("express");
 const { exigerEmailVerifie } = require("../middleware/auth");
 
-function creerRoutesCompte({ verifierUtilisateur, comptes, facturation }) {
+function creerRoutesCompte({ verifierUtilisateur, comptes, facturation, lettres }) {
   const router = express.Router();
 
   router.get("/api/health", (req, res) => {
@@ -22,6 +22,35 @@ function creerRoutesCompte({ verifierUtilisateur, comptes, facturation }) {
         emailVerified: req.user.email_verified === true,
         ...etat,
       });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /* ---------- Historique des lettres ---------- */
+
+  router.get("/api/letters", verifierUtilisateur, async (req, res, next) => {
+    try {
+      const limite = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
+      const decalage = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+      return res.json(await lettres.lister(req.user.uid, { limite, decalage }));
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/api/letters/:id", verifierUtilisateur, async (req, res, next) => {
+    try {
+      return res.json(await lettres.lire(req.user.uid, req.params.id));
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.delete("/api/letters/:id", verifierUtilisateur, async (req, res, next) => {
+    try {
+      await lettres.supprimer(req.user.uid, req.params.id);
+      return res.status(204).end();
     } catch (error) {
       return next(error);
     }

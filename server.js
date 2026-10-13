@@ -18,6 +18,7 @@ const { creerServiceIA } = require("./backend/services/ia");
 const { creerServiceComptes } = require("./backend/services/comptes");
 const { creerServiceFacturation } = require("./backend/services/facturation");
 const { creerServiceDocuments } = require("./backend/services/documents");
+const { creerServiceLettres } = require("./backend/services/lettres");
 
 
 /* =========================
@@ -81,6 +82,7 @@ const app = creerApp({
     ia: creerServiceIA({ openai, modele: config.openaiModel }),
     comptes: creerServiceComptes(firestore, { limiteGratuite: config.freeLetterLimit }),
     facturation: creerServiceFacturation({ db: firestore, stripe, config }),
+    lettres: creerServiceLettres(firestore),
     documents: creerServiceDocuments({
       pdfParse,
       ocr: (buffer, langue) => Tesseract.recognize(buffer, langue),

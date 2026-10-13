@@ -4,10 +4,10 @@ Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 
 ## État au 13 octobre 2026
 
-- **Dernière tâche terminée :** T6 — Mise à jour des dépendances vulnérables.
-- **Prochaine tâche :** T8 — API historique paginée (`/api/letters`) puis modularisation de `script.js`.
+- **Dernière tâche terminée :** T8 — Historique des lettres via l'API, paginé.
+- **Prochaine tâche :** T9 — Modularisation de `script.js` (`js/api.js`, `js/letters.js`…), puis T10 `API_URL` par environnement.
 - **Fichiers modifiés :** `server.js`, `script.js`, `dashboard.html`, `package.json`, `package-lock.json`, `.gitignore` ; nouveaux : `backend/**`, `tests-frontend/**`, `firestore.rules`, `firebase.json`, `.env.example`, `docs/**`.
-- **Tests validés :** `npm test` 59/59, `npm run test:interface` 8/8, `npm run test:emulateur` 46/46 (commit `beeed0b`).
+- **Tests validés :** `npm test` 70/70, `npm run test:interface` 11/11, `npm run test:emulateur` 49/49.
 - **Blocages :**
   - B1 — ~~Push GitHub refusé~~ résolu le 13 octobre 2026 : commits poussés sur `develop`.
   - B2 — Configuration Firebase/Stripe/Render non accessible : points « À confirmer » de l'audit.
@@ -49,7 +49,12 @@ Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 - **Modifications :** `appelerAPI()` avec token ; quota depuis `/api/me` ; Stripe sans identifiants client ; échappement HTML ; gestion d'erreurs.
 - **Tests :** 8 tests Playwright. **Résultat :** réussi ; contrôle : XSS et Checkout échouent sur l'ancien code.
 
-### T8 · Historique via l'API, paginé — À faire
+### T8 · Historique via l'API, paginé — Terminé
+- **Objectif :** LETTER-05 — historique paginé, consultation et suppression contrôlées par le serveur.
+- **Fichiers :** `backend/services/lettres.js`, `backend/routes/compte.js`, `backend/routes/ia.js`, `script.js`, tests.
+- **Modifications :** `GET /api/letters`, `GET/DELETE /api/letters/:id` ; lettre enregistrée par le serveur à la génération ; interface : « Ouvrir », « Afficher plus », confirmation avant suppression ; compteur du tableau de bord via l'API.
+- **Tests :** 11 API, 3 émulateur, 3 navigateur. **Résultat :** réussi.
+- **Restant :** retirer l'écriture de lettres par le navigateur des règles Firestore après la mise en production (D-12).
 ### T9 · Modularisation de `script.js` — À faire
 ### T10 · `API_URL` par environnement + environnement de test — À faire
 ### T11 · Quota serveur de l'assistant — À faire (décision P-03)

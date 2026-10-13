@@ -44,6 +44,12 @@ Chaque décision indique son contexte, le choix retenu et ses conséquences. Les
 ### D-10 · Prompts IA
 - Consignes communes : ne rien inventer, champs `[à compléter]`, prudence juridique, données utilisateur encadrées par `<donnees_utilisateur>` (atténuation des injections de prompt). Ajout d'une rubrique `POINTS_A_VERIFIER` à l'analyse.
 
+### D-12 · Historique des lettres géré par le serveur
+- **Choix :** la route de génération enregistre la lettre (`createdAt` serveur) ; l'interface lit, ouvre et supprime via `/api/letters` (pagination par décalage, 10 par page dans l'interface, 50 max).
+- Les anciennes lettres n'ont pas de `createdAt` : le tri se fait en mémoire (date `jj/mm/aaaa` reconvertie), sur 500 lettres maximum par utilisateur. Aucun index composite ni migration de données n'est nécessaire.
+- Lecture/suppression d'une lettre d'un autre → 404 (pas de 403, pour ne pas révéler son existence).
+- Les règles Firestore autorisent encore la création de lettres par le navigateur (compatibilité avec l'ancien frontend pendant la transition) ; à retirer après la mise en production du nouveau frontend.
+
 ### D-11 · Tests
 - `node:test` + `supertest` (aucun framework lourd) ; émulateur Firestore via `firebase-tools` ; Playwright pour l'interface avec Firebase/API/CDN simulés.
 

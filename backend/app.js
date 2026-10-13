@@ -20,7 +20,7 @@ const { creerRoutesCompte } = require("./routes/compte");
  * @param {object} deps.config            résultat de chargerConfig()
  * @param {Function} deps.verifyIdToken   (token, checkRevoked) => Promise<decodedToken>
  * @param {object} deps.stripe            client Stripe (webhooks.constructEvent)
- * @param {object} deps.services          { ia, comptes, facturation, documents }
+ * @param {object} deps.services          { ia, comptes, facturation, documents, lettres }
  * @param {object} [deps.logger]
  * @param {object} [deps.limites]         surcharge des limites de débit (tests)
  */
@@ -99,6 +99,7 @@ function creerApp({ config, verifyIdToken, stripe, services, logger = console, l
       verifierUtilisateur,
       comptes: services.comptes,
       facturation: services.facturation,
+      lettres: services.lettres,
     })
   );
 
@@ -109,6 +110,7 @@ function creerApp({ config, verifyIdToken, stripe, services, logger = console, l
       ia: services.ia,
       comptes: services.comptes,
       documents: services.documents,
+      lettres: services.lettres,
       config,
       logger,
     })

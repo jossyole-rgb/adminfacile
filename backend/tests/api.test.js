@@ -33,6 +33,9 @@ describe("Authentification des routes privées", () => {
     ["post", "/create-customer-portal-session"],
     ["post", "/api/billing/portal"],
     ["get", "/api/me"],
+    ["get", "/api/letters"],
+    ["get", "/api/letters/lettre-alice"],
+    ["delete", "/api/letters/lettre-alice"],
   ];
 
   for (const [methode, route] of routesPrivees) {
@@ -83,6 +86,30 @@ describe("Génération de lettre et quota serveur", () => {
     assert.equal(res.body.lettre, "réponse-genererLettre");
     assert.equal(res.body.lettersRemaining, 2);
     assert.equal(appels[0].args[0].ton, "professionnel");
+  });
+
+  test("la lettre générée est enregistrée par le serveur pour l'utilisateur du token", async () => {
+    const { app, enregistrees } = creerAppTest();
+    const res = await request(app)
+      .post("/generer-lettre")
+      .set("Authorization", "Bearer token-alice")
+      .send({ ...LETTRE_VALIDE, userId: "bob" });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.id, "lettre-1");
+    assert.equal(res.body.sauvegardee, true);
+    assert.equal(enregistrees[0].uid, "alice");
+    assert.equal(enregistrees[0].contenu, "réponse-genererLettre");
+  });
+
+  test("un échec d'enregistrement n'empêche pas d'obtenir la lettre", async () => {
+    const { app, quota } = creerAppTest({ sauvegardeEchoue: true });
+    const res = await request(app).post("/generer-lettre").set("Authorization", "Bearer token-alice").send(LETTRE_VALIDE);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.lettre, "réponse-genererLettre");
+    assert.equal(res.body.sauvegardee, false);
+    assert.equal(quota.utilisees, 1);
   });
 
   test("refuse un email non vérifié (403)", async () => {
@@ -299,6 +326,28 @@ describe("Facturation Stripe", () => {
     assert.equal(res.status, 200);
     assert.equal(appels[0].methode, "webhook");
     assert.equal(appels[0].args[0].id, "evt_1");
+  });
+});
+
+describe("Historique des lettres", () => {
+  test("liste paginée : limite bornée à 50 et décalage positif", async () => {
+    const { app, appels } = creerAppTest();
+    const res = await request(app).get("/api/letters?limit=999&offset=-3").set("Authorization", "Bearer token-alice");
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(appels.find((a) => a.methode === "listerLettres").args, ["alice", { limite: 50, decalage: 0 }]);
+  });
+
+  test("lecture d'une lettre d'un autre : 404", async () => {
+    const { app } = creerAppTest();
+    const res = await request(app).get("/api/letters/lettre-alice").set("Authorization", "Bearer token-bob");
+    assert.equal(res.status, 404);
+  });
+
+  test("suppression de sa lettre : 204 ; d'une lettre d'un autre : 404", async () => {
+    const { app } = creerAppTest();
+    assert.equal((await request(app).delete("/api/letters/lettre-alice").set("Authorization", "Bearer token-alice")).status, 204);
+    assert.equal((await request(app).delete("/api/letters/lettre-alice").set("Authorization", "Bearer token-bob")).status, 404);
   });
 });
 
