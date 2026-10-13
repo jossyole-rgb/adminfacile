@@ -52,7 +52,7 @@ app.use(
       "http://127.0.0.1:5500",
     ],
     methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -122,6 +122,29 @@ admin.initializeApp({
 });
 
 const firestore = admin.firestore();
+
+async function verifierUtilisateur(req, res, next) {
+  const authorization = req.headers.authorization || "";
+
+  if (!authorization.startsWith("Bearer ")) {
+    return res.status(401).json({
+      error: "Authentification requise."
+    });
+  }
+
+  const token = authorization.slice(7);
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token, true);
+
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      error: "Session invalide ou expirée."
+    });
+  }
+}
 
 
 /* =========================
@@ -272,7 +295,11 @@ app.get("/", (req, res) => {
    GÉNÉRATION DE LETTRE IA
 ========================= */
 
-app.post("/generer-lettre", iaLimiter, async (req, res) => {
+app.post(
+  "/generer-lettre",
+  iaLimiter,
+  verifierUtilisateur,
+  async (req, res) => {
   try {
     const { type, tonLettre, nom, destinataire, objet } = req.body;
 
