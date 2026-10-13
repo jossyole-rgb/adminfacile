@@ -260,13 +260,16 @@ window.genererLettre = async function () {
 
     desactiverFormulaire(true);
 
+    const token = await utilisateurConnecte.getIdToken();
+
     const reponse = await fetch(
       `${API_URL}/generer-lettre`,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
-        },
+           "Content-Type": "application/json",
+           "Authorization": `Bearer ${token}`
+},
         body: JSON.stringify({
           type,
           tonLettre,
