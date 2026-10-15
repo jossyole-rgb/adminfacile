@@ -7,7 +7,7 @@ const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
 const { AxeBuilder } = require("@axe-core/playwright");
-const { simulerServices, creerServeurStatique } = require("./simulations");
+const { simulerServices, reponsesParDefaut, creerServeurStatique } = require("./simulations");
 
 let serveur;
 let navigateur;
@@ -23,10 +23,10 @@ after(async () => {
   serveur.close();
 });
 
-async function ouvrir(pageHtml, { connecte = true, largeur = 1280, theme = "light" } = {}) {
+async function ouvrir(pageHtml, { connecte = true, largeur = 1280, theme = "light", reponsesAPI } = {}) {
   const contexte = await navigateur.newContext({ viewport: { width: largeur, height: 900 } });
   const page = await contexte.newPage();
-  await simulerServices(page, { connecte });
+  await simulerServices(page, { connecte, ...(reponsesAPI ? { reponsesAPI } : {}) });
   await page.addInitScript((t) => localStorage.setItem("theme", t), theme);
   await page.goto(`http://127.0.0.1:${serveur.address().port}/${pageHtml}`);
   await page.waitForLoadState("networkidle");
@@ -87,3 +87,18 @@ test("dashboard.html avec historique et modale ouverte : aucune violation, Écha
   assert.equal(await page.evaluate(() => document.getElementById("reponseIAModal").style.display), "none");
   await contexte.close();
 });
+
+for (const theme of ["light", "dark"]) {
+  test(`lettre ouverte en mode édition : aucune violation WCAG 2.2 AA (thème ${theme})`, async () => {
+    const reponsesAPI = reponsesParDefaut();
+    reponsesAPI["/api/letters/lettre-1"] = { status: 200, body: { id: "lettre-1", contenu: "Madame,\nLettre [à compléter]." } };
+
+    const { page, contexte } = await ouvrir("dashboard.html", { theme, reponsesAPI });
+    await page.waitForFunction(() => document.getElementById("userEmail").innerText.includes("@"));
+    await page.evaluate(() => window.afficherLettreHistorique("lettre-1"));
+    await page.waitForFunction(() => document.getElementById("resultat").getAttribute("role") === "textbox");
+
+    assert.deepEqual(await violations(page), []);
+    await contexte.close();
+  });
+}

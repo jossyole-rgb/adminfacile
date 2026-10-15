@@ -35,6 +35,7 @@ describe("Authentification des routes privées", () => {
     ["get", "/api/me"],
     ["get", "/api/letters"],
     ["get", "/api/letters/lettre-alice"],
+    ["put", "/api/letters/lettre-alice"],
     ["delete", "/api/letters/lettre-alice"],
     ["delete", "/api/me"],
   ];
@@ -385,6 +386,31 @@ describe("Historique des lettres", () => {
     const { app } = creerAppTest();
     assert.equal((await request(app).delete("/api/letters/lettre-alice").set("Authorization", "Bearer token-alice")).status, 204);
     assert.equal((await request(app).delete("/api/letters/lettre-alice").set("Authorization", "Bearer token-bob")).status, 404);
+  });
+
+  test("modification de sa lettre : contenu nettoyé et enregistré (LETTER-04)", async () => {
+    const { app, appels } = creerAppTest();
+    const res = await request(app)
+      .put("/api/letters/lettre-alice")
+      .set("Authorization", "Bearer token-alice")
+      .send({ contenu: "  Madame, Monsieur,\nversion corrigée  " });
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(appels.find((a) => a.methode === "modifierLettre").args, [
+      "alice",
+      "lettre-alice",
+      "Madame, Monsieur,\nversion corrigée",
+    ]);
+  });
+
+  test("modification : lettre d'un autre 404, contenu vide ou trop long 400", async () => {
+    const { app } = creerAppTest();
+    const put = (token, body) => request(app).put("/api/letters/lettre-alice").set("Authorization", `Bearer ${token}`).send(body);
+
+    assert.equal((await put("token-bob", { contenu: "x" })).status, 404);
+    assert.equal((await put("token-alice", { contenu: "   " })).status, 400);
+    assert.equal((await put("token-alice", { contenu: 42 })).status, 400);
+    assert.equal((await put("token-alice", { contenu: "a".repeat(20001) })).status, 400);
   });
 });
 

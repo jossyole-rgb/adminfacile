@@ -8,5 +8,6 @@ export const etat = {
   premium: false,
   stripeCustomerId: null,
   emailVerifie: false,
-  analyseCourante: ""
+  analyseCourante: "",
+  lettreCouranteId: null
 };

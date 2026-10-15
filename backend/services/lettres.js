@@ -100,6 +100,13 @@ function creerServiceLettres(db) {
       return versAPI(await lireLettreAutorisee(uid, id), { avecContenu: true });
     },
 
+    /** Enregistre la version modifiée par l'utilisateur (LETTER-04). */
+    async modifier(uid, id, contenu) {
+      const snap = await lireLettreAutorisee(uid, id);
+      await snap.ref.update({ contenu, updatedAt: FieldValue.serverTimestamp() });
+      return versAPI(await snap.ref.get(), { avecContenu: true });
+    },
+
     async supprimer(uid, id) {
       const snap = await lireLettreAutorisee(uid, id);
       await snap.ref.delete();

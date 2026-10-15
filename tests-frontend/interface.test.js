@@ -276,3 +276,82 @@ test("page de paiement réussi : Premium annoncé seulement après confirmation 
   const appels = requetesAPI.filter((r) => r.chemin === "/api/me" && r.headers.authorization === "Bearer token-test-alice");
   assert.ok(appels.length >= 2);
 });
+
+/** Remplace les bibliothèques docx/FileSaver (CDN simulé) pour capturer le texte exporté. */
+async function capturerExportsDOCX() {
+  await page.evaluate(() => {
+    window.__exports = [];
+    class Element {
+      constructor(options) {
+        Object.assign(this, options);
+      }
+    }
+    window.docx = {
+      Document: Element,
+      Paragraph: Element,
+      TextRun: Element,
+      Packer: {
+        toBlob: async (d) => d.sections[0].children.map((p) => p.children[0].text).join("\n"),
+      },
+    };
+    window.saveAs = (contenu, nom) => window.__exports.push({ contenu, nom });
+  });
+}
+
+test("lettre générée : modifiable, enregistrée via l'API et exportée dans sa version modifiée (LETTER-04)", async () => {
+  reponsesAPI["/generer-lettre"] = {
+    status: 200,
+    body: { id: "lettre-1", sauvegardee: true, lettre: "Madame, Monsieur,\nJe soussigné [à compléter]." },
+  };
+  reponsesAPI["PUT /api/letters/lettre-1"] = { status: 200, body: { id: "lettre-1" } };
+  await capturerExportsDOCX();
+
+  await page.fill("#nom", "Alice");
+  await page.fill("#destinataire", "CAF");
+  await page.fill("#objet", "Objet");
+  await page.click("#btnGenerer");
+  await page.waitForFunction(() => document.getElementById("resultat").innerText.includes("[à compléter]"));
+
+  assert.equal(await page.getAttribute("#resultat", "role"), "textbox");
+  assert.equal(await page.isVisible("#aideEditionLettre"), true);
+  assert.equal(await page.isEnabled("#btnEnregistrerLettre"), false, "rien à enregistrer avant modification");
+
+  // L'utilisateur complète la lettre au clavier.
+  await page.click("#resultat");
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type("\nAlice Martin");
+
+  await page.waitForFunction(() => !document.getElementById("btnEnregistrerLettre").disabled);
+  await page.click("#btnEnregistrerLettre");
+  await page.waitForFunction(() => document.getElementById("notification").innerText.includes("Modifications enregistrées"));
+
+  const appel = requetesAPI.find((r) => r.methode === "PUT");
+  assert.equal(appel.chemin, "/api/letters/lettre-1");
+  assert.equal(appel.headers.authorization, "Bearer token-test-alice");
+  assert.match(JSON.parse(appel.body).contenu, /Alice Martin$/);
+
+  await page.click("#btnDOCX");
+  await page.waitForFunction(() => window.__exports.length === 1);
+  const exporte = await page.evaluate(() => window.__exports[0]);
+  assert.equal(exporte.nom, "lettre_adminfacile.docx");
+  assert.match(exporte.contenu, /Alice Martin/);
+});
+
+test("réponse IA : brouillon modifiable, export DOCX de la version modifiée, aucun envoi (REPLY-02/03)", async () => {
+  await capturerExportsDOCX();
+  await page.evaluate(() => window.afficherModalReponseIA("Madame,\nSignature : [à compléter]"));
+
+  assert.equal(await page.isVisible("#reponseIAContent"), true);
+  assert.match(await page.innerText("#aideReponseIA"), /n’envoie jamais rien automatiquement/);
+
+  await page.fill("#reponseIAContent", "Madame,\nSignature : Alice Martin");
+  const requetesAvant = requetesAPI.length;
+
+  await page.click("#reponseIAModal >> text=📝 Télécharger en DOCX");
+  await page.waitForFunction(() => window.__exports.length === 1);
+  const exporte = await page.evaluate(() => window.__exports[0]);
+
+  assert.equal(exporte.nom, "reponse_adminfacile.docx");
+  assert.equal(exporte.contenu, "Madame,\nSignature : Alice Martin");
+  assert.equal(requetesAPI.length, requetesAvant, "l'export ne contacte pas le serveur");
+});

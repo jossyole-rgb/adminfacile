@@ -1438,8 +1438,21 @@ select:focus-visible {
   overflow-y: auto;
 }
 
+textarea.ia-response-box {
+  display: block;
+  width: 100%;
+  min-height: 40vh;
+  border-top: 1px solid #cbd5e1;
+  border-right: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  font: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
 .ia-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 15px;
   margin-top: 25px;
 }
@@ -1687,4 +1700,30 @@ summary:focus-visible {
 
 .dark-mode .zone-compte summary {
   color: #fca5a5;
+}
+
+
+/* Édition de la lettre générée (LETTER-04) */
+.aide-edition {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.resultat[contenteditable] {
+  cursor: text;
+  outline: 2px dashed transparent;
+}
+
+.resultat[contenteditable]:hover {
+  outline-color: #93c5fd;
+}
+
+.dark-mode .aide-edition {
+  color: #cbd5e1;
+}
+
+.dark-mode textarea.ia-response-box {
+  background: #0f172a;
+  color: #e2e8f0;
 }

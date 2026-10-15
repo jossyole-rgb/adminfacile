@@ -296,6 +296,18 @@ describe("Historique des lettres (Firestore réel)", () => {
     assert.equal(lettre.contenu, "Texte complet");
     assert.ok(lettre.createdAt > 0);
   });
+
+  test("modification : seule la propriétaire peut modifier, le contenu est mis à jour", async () => {
+    const lettres = creerServiceLettres(db);
+    const id = await lettres.enregistrer("alice", { type: "caf", contenu: "Version IA", nom: "Alice", destinataire: "CAF" });
+
+    await assert.rejects(lettres.modifier("bob", id, "piratage"), (e) => e.status === 404);
+    assert.equal((await lettres.lire("alice", id)).contenu, "Version IA");
+
+    const modifiee = await lettres.modifier("alice", id, "Version relue");
+    assert.equal(modifiee.contenu, "Version relue");
+    assert.equal((await db.collection("lettres").doc(id).get()).data().userId, "alice");
+  });
 });
 
 describe("Suppression de compte (Firestore réel, Stripe et Auth simulés)", () => {

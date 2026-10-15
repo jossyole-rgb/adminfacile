@@ -97,8 +97,15 @@
     <section id="resultat" class="resultat" aria-live="polite" aria-label="Lettre générée">
       ✨ Votre lettre apparaîtra ici après génération.
     </section>
+    <p id="aideEditionLettre" class="aide-edition" hidden>
+      ✏️ Tu peux modifier la lettre directement : relis-la et complète les champs [à compléter] avant de l’envoyer.
+    </p>
 
     <div class="actions">
+      <button id="btnEnregistrerLettre" onclick="enregistrerModificationsLettre()" disabled>
+        💾 Enregistrer mes modifications
+      </button>
+
       <button id="btnCopier" onclick="copierLettre()" disabled>
         📋 Copier la lettre
       </button>
@@ -343,14 +350,16 @@
 
     <div class="ia-header">
       <h2>🤖 Réponse IA générée</h2>
-      <p>Réponse administrative prête à utiliser.</p>
+      <p id="aideReponseIA">Brouillon modifiable : relis-le, complète les champs [à compléter], puis envoie-le toi-même. AdminFacile n’envoie jamais rien automatiquement.</p>
     </div>
 
-    <div id="reponseIAContent" class="ia-response-box"></div>
+    <label for="reponseIAContent" class="visuellement-cache">Réponse IA, modifiable</label>
+    <textarea id="reponseIAContent" class="ia-response-box" aria-describedby="aideReponseIA" spellcheck="true"></textarea>
 
     <div class="ia-actions">
       <button onclick="copierReponseIA()">📋 Copier la réponse</button>
       <button onclick="telechargerReponseIAPDF()">📄 Télécharger en PDF</button>
+      <button onclick="telechargerReponseIADOCX()">📝 Télécharger en DOCX</button>
       <button onclick="fermerModalReponseIA()" class="btn-secondary">Fermer</button>
     </div>
   </div>

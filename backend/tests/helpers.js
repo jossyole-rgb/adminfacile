@@ -109,6 +109,13 @@ function creerFauxServices(surcharges = {}) {
       }
       return { id, contenu: "Contenu" };
     },
+    async modifier(uid, id, contenu) {
+      appels.push({ methode: "modifierLettre", args: [uid, id, contenu] });
+      if (id !== "lettre-alice" || uid !== "alice") {
+        throw Object.assign(new Error("Lettre introuvable."), { status: 404, code: "NOT_FOUND", expose: true });
+      }
+      return { id, contenu };
+    },
     async supprimer(uid, id) {
       appels.push({ methode: "supprimerLettre", args: [uid, id] });
       if (id !== "lettre-alice" || uid !== "alice") {

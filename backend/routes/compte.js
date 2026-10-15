@@ -4,6 +4,9 @@
 
 const express = require("express");
 const { exigerEmailVerifie } = require("../middleware/auth");
+const { texteRequis } = require("../middleware/validation");
+
+const LONGUEUR_MAX_LETTRE = 20000;
 
 function creerRoutesCompte({ verifierUtilisateur, comptes, facturation, lettres, suppression }) {
   const router = express.Router();
@@ -70,6 +73,15 @@ function creerRoutesCompte({ verifierUtilisateur, comptes, facturation, lettres,
   router.get("/api/letters/:id", verifierUtilisateur, async (req, res, next) => {
     try {
       return res.json(await lettres.lire(req.user.uid, req.params.id));
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.put("/api/letters/:id", verifierUtilisateur, async (req, res, next) => {
+    try {
+      const contenu = texteRequis(req.body, "contenu", { max: LONGUEUR_MAX_LETTRE, libelle: "lettre" });
+      return res.json(await lettres.modifier(req.user.uid, req.params.id, contenu));
     } catch (error) {
       return next(error);
     }

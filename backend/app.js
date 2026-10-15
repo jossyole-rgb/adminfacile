@@ -35,7 +35,7 @@ function creerApp({ config, verifyIdToken, stripe, services, logger = console, l
   app.use(
     cors({
       origin: config.corsOrigins,
-      methods: ["GET", "POST", "DELETE"],
+      methods: ["GET", "POST", "PUT", "DELETE"],
       allowedHeaders: ["Content-Type", "Authorization"],
     })
   );

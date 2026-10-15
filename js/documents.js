@@ -8,6 +8,7 @@ import { collection, addDoc, getDocs, query, where, deleteDoc, doc, getDoc } fro
 import { etat } from "./etat.js";
 import { afficherLoader, afficherNotification, afficherToast, echapperHTML, focaliserModale, masquerLoader, restaurerFocus, texteMultiligne } from "./ui.js";
 import { appelerAPI } from "./api.js";
+import { exporterDOCX } from "./exports.js";
 
 
 /* =========================
@@ -362,7 +363,7 @@ window.afficherModalReponseIA = function (texte) {
 
   if (!modal || !content) return;
 
-  content.textContent = texte;
+  content.value = texte;
   modal.style.display = "flex";
   focaliserModale(modal);
   document.body.classList.add("modal-open");
@@ -383,7 +384,7 @@ window.copierReponseIA = function () {
 
   if (!content) return;
 
-  navigator.clipboard.writeText(content.textContent);
+  navigator.clipboard.writeText(content.value);
 
   afficherToast("✅ Réponse copiée", "success");
 };
@@ -488,6 +489,29 @@ window.fermerAnalyseModal = function () {
 
 
 /* =========================================
+   TELECHARGER REPONSE IA EN DOCX (REPLY-02)
+   Exporte la version éventuellement modifiée par l'utilisateur.
+========================================= */
+
+window.telechargerReponseIADOCX = async function () {
+  const texte = document.getElementById("reponseIAContent")?.value || "";
+
+  if (!texte.trim()) {
+    afficherToast("❌ Aucune réponse IA à télécharger", "error");
+    return;
+  }
+
+  try {
+    await exporterDOCX(texte, "reponse_adminfacile.docx");
+    afficherToast("✅ DOCX téléchargé", "success");
+  } catch (error) {
+    console.error("Erreur export DOCX réponse :", error);
+    afficherToast("❌ Export DOCX impossible", "error");
+  }
+};
+
+
+/* =========================================
    TELECHARGER REPONSE IA EN PDF
 ========================================= */
 
@@ -499,7 +523,7 @@ window.telechargerReponseIAPDF = function () {
     return;
   }
 
-  const texte = contenu.innerText;
+  const texte = contenu.value;
 
   if (!texte.trim()) {
     afficherToast("❌ Aucune réponse IA à télécharger", "error");

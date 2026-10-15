@@ -7,6 +7,7 @@ import { etat } from "./etat.js";
 import { afficherNotification, echapperHTML, texteMultiligne } from "./ui.js";
 import { appelerAPI } from "./api.js";
 import { mettreAJourDashboard } from "./dashboard.js";
+import { exporterDOCX } from "./exports.js";
 
 
 /* =========================
@@ -47,6 +48,7 @@ window.genererLettre = async function () {
     bouton.disabled = true;
     bouton.innerText = "Génération...";
     loader.style.display = "block";
+    activerBoutonsLettre(false);
     resultat.innerText = "L’IA rédige votre lettre...";
 
     desactiverFormulaire(true);
@@ -66,6 +68,7 @@ window.genererLettre = async function () {
     }
 
     resultat.innerText = data.lettre;
+    etat.lettreCouranteId = data.sauvegardee ? data.id : null;
 
     activerBoutonsLettre(true);
 
@@ -111,12 +114,83 @@ export function desactiverFormulaire(etat) {
 }
 
 
-export function activerBoutonsLettre(etat) {
-  document.getElementById("btnCopier").disabled = !etat;
-  document.getElementById("btnTelecharger").disabled = !etat;
-  document.getElementById("btnPDF").disabled = !etat;
-  document.getElementById("btnDOCX").disabled = !etat;
+export function activerBoutonsLettre(actif) {
+  document.getElementById("btnCopier").disabled = !actif;
+  document.getElementById("btnTelecharger").disabled = !actif;
+  document.getElementById("btnPDF").disabled = !actif;
+  document.getElementById("btnDOCX").disabled = !actif;
+  rendreLettreModifiable(actif);
 }
+
+
+/* =========================
+   ÉDITION DE LA LETTRE (LETTER-04)
+   La lettre affichée est modifiable directement ; les copies et exports
+   utilisent toujours le texte affiché, donc la version modifiée.
+========================= */
+
+function rendreLettreModifiable(actif) {
+  const resultat = document.getElementById("resultat");
+  const aide = document.getElementById("aideEditionLettre");
+
+  if (actif) {
+    resultat.setAttribute("contenteditable", "plaintext-only");
+    // Repli pour les navigateurs qui ne connaissent pas « plaintext-only ».
+    if (resultat.contentEditable !== "plaintext-only") resultat.setAttribute("contenteditable", "true");
+    resultat.setAttribute("role", "textbox");
+    resultat.setAttribute("aria-multiline", "true");
+    resultat.setAttribute("aria-label", "Lettre générée, modifiable");
+    resultat.setAttribute("aria-describedby", "aideEditionLettre");
+    // Pas d'annonce à chaque frappe pendant l'édition.
+    resultat.setAttribute("aria-live", "off");
+  } else {
+    resultat.removeAttribute("contenteditable");
+    resultat.removeAttribute("role");
+    resultat.removeAttribute("aria-multiline");
+    resultat.removeAttribute("aria-describedby");
+    resultat.setAttribute("aria-label", "Lettre générée");
+    resultat.setAttribute("aria-live", "polite");
+    etat.lettreCouranteId = null;
+  }
+
+  if (aide) aide.hidden = !actif;
+  marquerLettreModifiee(false);
+}
+
+function marquerLettreModifiee(modifiee) {
+  const bouton = document.getElementById("btnEnregistrerLettre");
+  if (bouton) bouton.disabled = !(modifiee && etat.lettreCouranteId);
+}
+
+document.getElementById("resultat")?.addEventListener("input", () => marquerLettreModifiee(true));
+
+window.enregistrerModificationsLettre = async function () {
+  const texte = document.getElementById("resultat").innerText.trim();
+  const bouton = document.getElementById("btnEnregistrerLettre");
+
+  if (!etat.lettreCouranteId) {
+    afficherNotification("Cette lettre n’est pas dans l’historique : copie-la ou exporte-la.");
+    return;
+  }
+
+  if (!texte) {
+    afficherNotification("La lettre est vide : rien à enregistrer.");
+    return;
+  }
+
+  try {
+    bouton.disabled = true;
+    await appelerAPI(`/api/letters/${encodeURIComponent(etat.lettreCouranteId)}`, {
+      method: "PUT",
+      body: { contenu: texte },
+    });
+    afficherNotification("Modifications enregistrées dans l’historique.");
+  } catch (error) {
+    console.error("Erreur enregistrement lettre :", error);
+    afficherNotification(error.message || "Erreur lors de l’enregistrement.");
+    marquerLettreModifiee(true);
+  }
+};
 
 
 export function texteResultatEstVide(texte) {
@@ -191,9 +265,6 @@ window.telechargerPDF = function () {
 
 
 window.telechargerDOCX = async function () {
-
-  const { Document, Packer, Paragraph, TextRun } = window.docx;
-
   const texte = document.getElementById("resultat").innerText;
 
   if (texteResultatEstVide(texte)) {
@@ -201,34 +272,7 @@ window.telechargerDOCX = async function () {
     return;
   }
 
-  const lignes = texte
-    .split("\n")
-    .filter((ligne) => ligne.trim() !== "");
-
-  const documentWord = new Document({
-    sections: [
-      {
-        children: lignes.map(
-          (ligne) =>
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: ligne,
-                  size: 24
-                })
-              ],
-              spacing: {
-                after: 200
-              }
-            })
-        )
-      }
-    ]
-  });
-
-  const blob = await Packer.toBlob(documentWord);
-
-  saveAs(blob, "lettre_adminfacile.docx");
+  await exporterDOCX(texte, "lettre_adminfacile.docx");
 
   afficherNotification("DOCX téléchargé.");
 };
@@ -257,6 +301,7 @@ window.resumerLettre = async function () {
     }
 
     resultat.innerText = data.resume;
+    marquerLettreModifiee(true);
 
     afficherNotification("Résumé généré.");
   } catch (error) {
@@ -292,6 +337,7 @@ window.reecrireLettre = async function (style) {
     }
 
     resultat.innerText = data.lettre;
+    marquerLettreModifiee(true);
 
     afficherNotification("Lettre réécrite.");
     
@@ -342,9 +388,10 @@ window.afficherLettreHistorique = async function (id) {
 
     document.getElementById("resultat").innerText = lettre.contenu || "";
     activerBoutonsLettre(Boolean(lettre.contenu));
+    etat.lettreCouranteId = lettre.contenu ? lettre.id || id : null;
     document.getElementById("resultat").scrollIntoView({ behavior: "smooth" });
 
-    afficherNotification("Lettre ouverte : tu peux la copier ou l’exporter.");
+    afficherNotification("Lettre ouverte : tu peux la modifier, la copier ou l’exporter.");
   } catch (error) {
     console.error("Erreur ouverture lettre :", error);
     afficherNotification(error.message || "Erreur ouverture lettre.");
