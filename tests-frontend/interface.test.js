@@ -355,3 +355,9 @@ test("réponse IA : brouillon modifiable, export DOCX de la version modifiée, a
   assert.equal(exporte.contenu, "Madame,\nSignature : Alice Martin");
   assert.equal(requetesAPI.length, requetesAvant, "l'export ne contacte pas le serveur");
 });
+
+test("assistant : avertissement visible sur les limites de l'IA (CHAT-01)", async () => {
+  const texte = await page.innerText(".chat-box .avertissement-ia");
+  assert.match(texte, /ne remplacent pas un conseil juridique/);
+  assert.match(texte, /service-public\.fr/);
+});

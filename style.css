@@ -1727,3 +1727,18 @@ summary:focus-visible {
   background: #0f172a;
   color: #e2e8f0;
 }
+
+/* Avertissement sur les limites de l'IA (CHAT-01) */
+.avertissement-ia {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #78350f;
+  font-size: 0.9rem;
+}
+
+.dark-mode .avertissement-ia {
+  background: #422006;
+  color: #fde68a;
+}
