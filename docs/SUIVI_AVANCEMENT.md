@@ -2,16 +2,15 @@
 
 Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 
-## État au 13 octobre 2026
+## État au 15 octobre 2026
 
-- **Dernière tâche terminée :** T9 — Découpage de `script.js` en modules ES.
-- **Prochaine tâche :** T5 — publication des règles Firestore par Joss (identifiants Firebase requis), puis T10 `API_URL` par environnement et environnement de test.
-- **Fichiers modifiés :** `server.js`, `script.js`, `dashboard.html`, `package.json`, `package-lock.json`, `.gitignore` ; nouveaux : `backend/**`, `tests-frontend/**`, `firestore.rules`, `firebase.json`, `.env.example`, `docs/**`.
-- **Tests validés :** `npm test` 70/70, `npm run test:interface` 12/12, `npm run test:emulateur` 49/49.
+- **Dernière tâche terminée :** T16 — avertissement sur les limites de l'IA (CHAT-01).
+- **Prochaine étape :** actions de Joss listées dans `docs/RAPPORT_FINAL.md` (publication des règles, environnement de test, recette manuelle, décisions P-02, P-04, P-05).
+- **Tests validés :** `npm test` 86/86, `npm run test:emulateur` 57/57, `npm run test:interface` 29/29 (19 navigateur + 10 accessibilité).
 - **Blocages :**
-  - B1 — ~~Push GitHub refusé~~ résolu le 13 octobre 2026 : commits poussés sur `develop`.
-  - B2 — Configuration Firebase/Stripe/Render non accessible : points « À confirmer » de l'audit.
-- **Décisions en attente :** P-01 à P-05 (`docs/DECISIONS_TECHNIQUES.md`).
+  - B1 — ~~Push GitHub refusé~~ résolu le 13 octobre 2026.
+  - B2 — Aucun identifiant Firebase, Stripe ou Render dans l'environnement de Claude : publication des règles, environnement de test et recette manuelle à faire par Joss.
+- **Décisions en attente :** P-02, P-04, P-05 (`docs/DECISIONS_TECHNIQUES.md`).
 
 ## Tâches
 
@@ -60,7 +59,37 @@ Statuts : **À faire** · **En cours** · **Terminé** · **Bloqué**
 - **Fichiers :** `script.js` (point d'entrée), `js/etat.js`, `ui.js`, `api.js`, `auth.js`, `letters.js`, `dashboard.js`, `billing.js`, `assistant.js`, `documents.js`.
 - **Modifications :** découpage sans changement de comportement ; état partagé explicite ; pages HTML inchangées.
 - **Tests :** 12 tests navigateur (dont chargement sans erreur et existence de toutes les fonctions `onclick`), ESLint `no-undef` sans erreur. **Résultat :** réussi.
-### T10 · `API_URL` par environnement + environnement de test — À faire
-### T11 · Quota serveur de l'assistant — À faire (décision P-03)
-### T12 · Accessibilité et responsive — À faire
-### T13 · Suppression de compte et conservation des données — À faire (décision P-04)
+### T10 · `API_URL` par environnement — Terminé (environnement de test : Bloqué, B2)
+- **Fichiers :** `js/config.js`, `js/api.js`.
+- **Modifications :** URL de l'API choisie selon l'adresse du site : `localhost`/`127.0.0.1` → API locale ; déploiement Netlify de prévisualisation (`…--….netlify.app`) → `https://adminfacile-test.onrender.com` ; sinon production.
+- **Tests :** test navigateur sur les trois cas. **Résultat :** réussi.
+- **Restant :** créer le service Render de test, le projet Firebase de test et les clés Stripe test (Joss).
+
+### T11 · Quota serveur de l'assistant (A16, CHAT-02) — Terminé
+- **Fichiers :** `backend/services/comptes.js`, `backend/routes/ia.js`, `js/assistant.js`.
+- **Modifications :** 5 messages / jour en gratuit (heure de Paris, `FREE_CHAT_DAILY_LIMIT`), illimité en Premium, transaction Firestore, message rendu si l'IA échoue ; assistant et chat document concernés.
+- **Tests :** API (402, libération), émulateur (concurrence, changement de jour, cohabitation avec le quota de lettres). **Résultat :** réussi.
+
+### T12 · Accessibilité et responsive (A20) — Terminé
+- **Fichiers :** `dashboard.html`, `index.html`, `success.html`, `style.css`, `js/ui.js`, `js/auth.js`, `js/documents.js`.
+- **Modifications :** libellés, lien d'évitement, régions `aria-live`, modales accessibles (focus, Échap), contrastes clair/sombre, `prefers-reduced-motion`, suppression de `prompt()`/`alert()`.
+- **Tests :** 10 tests axe-core WCAG 2.2 AA (pages, thèmes, modale, lettre en édition) et absence de défilement horizontal à 375 px. **Résultat :** réussi.
+- **Restant :** contrôle manuel au lecteur d'écran (non automatisable).
+
+### T13 · Suppression de compte (A18, AUTH-05) — Terminé (conservation : décision P-04)
+- **Fichiers :** `backend/services/suppression.js`, `backend/routes/compte.js`, `js/compte.js`, `dashboard.html`.
+- **Modifications :** `DELETE /api/me` avec saisie « SUPPRIMER » et connexion de moins de 10 minutes ; résiliation des abonnements Stripe, suppression des lettres, analyses, conversations, compteurs, profil puis compte Firebase Auth ; arrêt complet si Stripe échoue.
+- **Tests :** API (confirmation, connexion récente) et émulateur (données d'un autre utilisateur intactes, échec Stripe). **Résultat :** réussi.
+
+### T14 · OCR limité et code mort (A19, A24, A25, A31) — Terminé
+- **Fichiers :** `backend/services/documents.js`, `backend/services/ocr.js`, `server.js`, `firebase.js`, `js/auth.js`, `package.json`.
+- **Modifications :** délai maximal OCR (30 s) avec arrêt du moteur ; correction d'un arrêt complet du serveur sur erreur Tesseract ; données de langue française livrées ; doublons de `firebase.js` et dépendances `docx`/`file-saver` retirés.
+- **Tests :** 4 tests unitaires (dont 2 qui échouent sur l'ancien code) et essai réel avec une image (texte reconnu en 0,4 s, délai dépassé sans arrêt du processus). **Résultat :** réussi.
+
+### T15 · Édition avant export (LETTER-04, REPLY-02) — Terminé
+- **Fichiers :** `backend/services/lettres.js`, `backend/routes/compte.js`, `js/letters.js`, `js/documents.js`, `js/exports.js`, `dashboard.html`.
+- **Modifications :** lettre modifiable dans la page et enregistrable (`PUT /api/letters/:id`) ; copie et exports utilisent la version modifiée ; réponse IA en brouillon modifiable avec export DOCX et rappel « aucun envoi automatique ».
+- **Tests :** 4 API, 1 émulateur, 2 navigateur, 2 accessibilité. **Résultat :** réussi.
+
+### T16 · Avertissement IA (CHAT-01) — Terminé
+- **Fichiers :** `dashboard.html`, `style.css`. **Tests :** 1 navigateur + contrastes axe-core. **Résultat :** réussi.

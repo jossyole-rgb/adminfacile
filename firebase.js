@@ -20,26 +20,20 @@ import {
   getFirestore
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import { ENVIRONNEMENT, configurationFirebase } from "./js/config.js";
+
 
 /* =========================
    CONFIGURATION FIREBASE
 ========================= */
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB_tDtb1IlbIkBi8vGspHUncepJBnD1Yrc",
-  authDomain: "adminfacile.firebaseapp.com",
-  projectId: "adminfacile",
-  storageBucket: "adminfacile.firebasestorage.app",
-  messagingSenderId: "537898349850",
-  appId: "1:537898349850:web:9c9aed045981be3cdaa8a3"
-};
+const firebaseConfig = configurationFirebase(ENVIRONNEMENT);
 
 
 /* =========================
    INITIALISATION FIREBASE
    Ce module ne fait qu'initialiser Firebase : les actions (connexion, création de compte,
-   déconnexion) sont dans js/auth.js. La clé ci-dessus est un identifiant public de projet,
-   pas un secret : l'accès aux données est protégé par les règles Firestore et l'API.
+   déconnexion) sont dans js/auth.js. La configuration dépend de l'environnement (js/config.js).
 ========================= */
 
 const app = initializeApp(firebaseConfig);

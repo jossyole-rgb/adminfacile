@@ -259,6 +259,15 @@ test("URL de l'API selon l'adresse du site", async () => {
   assert.deepEqual(resultats, ["production", "test", "test", "local", "local", "production"]);
 });
 
+test("configuration Firebase selon l'environnement (repli sur la production tant que le projet de test n'existe pas)", async () => {
+  const projets = await page.evaluate(async () => {
+    const { configurationFirebase } = await import("/js/config.js");
+    return ["production", "test", "local", "inconnu"].map((e) => configurationFirebase(e).projectId);
+  });
+
+  assert.deepEqual(projets, ["adminfacile", "adminfacile", "adminfacile", "adminfacile"]);
+});
+
 test("page de paiement réussi : Premium annoncé seulement après confirmation du serveur", async () => {
   reponsesAPI["/api/me"] = { status: 200, body: { premium: false } };
 

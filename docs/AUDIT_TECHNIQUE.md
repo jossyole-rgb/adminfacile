@@ -1,6 +1,6 @@
 # Audit technique — AdminFacile 2.0
 
-**Date :** 13 octobre 2026
+**Date :** 13 octobre 2026 — **statuts mis à jour le 15 octobre 2026**
 **Périmètre :** dépôt `jossyole-rgb/adminfacile`, branche `develop` (commit de départ `7b436fa`).
 **Méthode :** lecture intégrale de `server.js`, `script.js`, `firebase.js`, `index.html`, `dashboard.html`, `success.html`, `style.css`, `package.json`, `package-lock.json` ; `npm audit` ; exécution de tests automatisés écrits pour l'occasion (voir `docs/TESTS_ET_RECETTE.md`).
 
@@ -16,9 +16,9 @@
 
 | Priorité | Total | Corrigés | Partiels | Ouverts |
 |---|---|---|---|---|
-| P0 | 6 | 5 | 1 (règles à déployer) | 0 |
-| P1 | 15 | 10 | 2 | 3 |
-| P2 | 9 | 3 | 0 | 6 |
+| P0 | 6 | 5 | 1 (règles à publier par Joss) | 0 |
+| P1 | 16 | 13 | 3 | 0 |
+| P2 | 9 | 6 | 0 | 3 (décision ou vérification hors dépôt) |
 
 ## P0 — Critique
 
@@ -78,25 +78,26 @@
 | A09 | Aucune limite de taille des champs envoyés à l'IA ; ton libre injecté dans le prompt | `server.js` | Vérifié | Validation (`backend/middleware/validation.js`), listes fermées de types/tons/styles, données encadrées `<donnees_utilisateur>` | Corrigé |
 | A10 | Erreurs : `analyserDocument` sans `try/catch` (interface bloquée), chat affichant `undefined`, fuite `error.message` Stripe | `script.js`, `server.js` | Vérifié | Gestionnaire d'erreurs centralisé, messages français, test navigateur erreur réseau | Corrigé |
 | A11 | Scripts importés deux fois dans `dashboard.html` | `dashboard.html` | Vérifié (sans double exécution : un module ES n'est évalué qu'une fois) | Doublon supprimé | Corrigé |
-| A12 | Aucun test ni commande `npm test` | `package.json` | Vérifié | 130 tests (API, services, émulateur, navigateur) | Corrigé |
+| A12 | Aucun test ni commande `npm test` | `package.json` | Vérifié | 172 tests (86 API/services, 57 émulateur, 19 navigateur, 10 accessibilité axe-core) | Corrigé |
 | A13 | Dépendances vulnérables : 22 en production dont 2 critiques | `package-lock.json` | Vérifié (`npm audit`) | `npm audit fix` sans rupture → 8 modérées restantes (`uuid` via `google-gax`) | Partiel |
 | A14 | Prompts poussant à des lettres « juridiquement correctes », sans consigne contre l'invention de faits | `server.js` | Vérifié | Règles de fiabilité dans tous les prompts, champs `[à compléter]`, section `POINTS_A_VERIFIER` | Corrigé |
 | A15 | Vérification d'email appliquée seulement dans le navigateur | `script.js` | Vérifié | Exigée côté serveur pour la génération et le Checkout | Corrigé |
-| A16 | Quota du chat IA (5 messages) seulement dans le navigateur, remis à zéro au rechargement | `script.js` | Vérifié | Atténué par une limite par utilisateur (30 requêtes IA / 15 min) ; quota serveur à définir (CHAT-02) | Partiel |
+| A16 | Quota du chat IA (5 messages) seulement dans le navigateur, remis à zéro au rechargement | `script.js` | Vérifié | Quota serveur transactionnel `usage/{uid}` : 5 messages / jour (heure de Paris) en gratuit, illimité en Premium, message rendu si l'IA échoue ; tests API et émulateur | Corrigé |
 | A17 | Historique non paginé, relu en entier à chaque affichage ; lettres écrites par le navigateur | `script.js` | Vérifié | API `/api/letters` (liste paginée, détail, suppression, contrôle de propriété) ; lettres enregistrées par le serveur ; tests API, émulateur, navigateur | Corrigé |
-| A18 | Pas de suppression de compte ni de politique de conservation des documents/analyses | — | Vérifié | À faire après décision sur la durée de conservation (AUTH-05, DOC-06) | Ouvert |
-| A19 | OCR Tesseract exécuté dans le processus web | `server.js` | Vérifié ; impact réel **à confirmer** sous charge | Limité par auth + débit ; à évaluer : délai maximal, file d'attente | Ouvert |
-| A20 | Accessibilité : champs sans libellé (chat, upload), `prompt()`/`alert()`, boutons à emoji seuls | `dashboard.html`, `script.js` | Vérifié | Phase 5 (UI) | Ouvert |
+| A18 | Pas de suppression de compte ni de politique de conservation des documents/analyses | — | Vérifié | Suppression de compte `DELETE /api/me` (confirmation, connexion récente, résiliation Stripe, données Firestore, compte Auth) testée sur émulateur ; **durée de conservation à décider (P-04)** | Partiel |
+| A19 | OCR Tesseract exécuté dans le processus web | `server.js` | Vérifié ; charge réelle **à confirmer** | Délai maximal (30 s, `OCR_TIMEOUT_SECONDS`) avec arrêt du moteur ; données de langue livrées avec l'application ; testé avec une vraie image. Pas de file d'attente : à surveiller en production | Partiel |
+| A20 | Accessibilité : champs sans libellé (chat, upload), `prompt()`/`alert()`, boutons à emoji seuls | `dashboard.html`, `script.js` | Vérifié (axe-core) | Libellés, lien d'évitement, modales `role="dialog"` avec focus et Échap, contrastes clair/sombre, `prefers-reduced-motion`, plus de `prompt()`/`alert()` ; 10 tests axe-core WCAG 2.2 AA et mobile 375 px | Corrigé |
+| A31 | Une erreur Tesseract (image illisible, données de langue indisponibles) était levée hors de toute promesse et **arrêtait le processus Node** ; idem pour un rejet tardif après délai | `server.js` | Vérifié le 15/10/2026 : arrêt reproduit en local avec un échec de chargement des données de langue et avec un délai dépassé ; pour une image illisible, déduit du code de `tesseract.js` (même chemin d'erreur), non reproduit | `errorHandler` Tesseract, rejet tardif intercepté, moteur arrêté ; tests unitaires (échouent sur l'ancien code) + essai réel | Corrigé |
 | A21 | Démarrage en erreur obscure si `FIREBASE_PRIVATE_KEY` manque ; journaux contenant des emails | `server.js` | Vérifié | Message explicite au démarrage ; plus d'emails dans les logs | Corrigé |
 
 ## P2 — Amélioration
 
 | ID | Constat | Statut |
 |---|---|---|
-| A22 | `success.html` annonce « Premium activé » avant confirmation du webhook | Ouvert |
-| A23 | `invoice.payment_failed` retire le Premium immédiatement, alors que Stripe relance le paiement (comportement conservé, décision en attente D-07) | Ouvert |
-| A24 | Dépendances serveur inutilisées (`docx`, `file-saver`) | Ouvert |
-| A25 | `firebase.js` redéfinit `creerCompte`/`connexion` aussi définies dans `script.js` | Ouvert |
+| A22 | `success.html` annonce « Premium activé » avant confirmation du webhook | Corrigé (attend la confirmation de `/api/me`, test navigateur) |
+| A23 | `invoice.payment_failed` retire le Premium immédiatement, alors que Stripe relance le paiement (comportement conservé) | Ouvert — **décision P-02** |
+| A24 | Dépendances serveur inutilisées (`docx`, `file-saver`) | Corrigé (retirées) |
+| A25 | `firebase.js` redéfinit `creerCompte`/`connexion` aussi définies dans `script.js` | Corrigé (`firebase.js` limité à l'initialisation) |
 | A26 | `.DS_Store` versionné | Corrigé |
 | A27 | Origines CORS codées en dur (dont localhost) | Corrigé (variable `CORS_ORIGINS`, valeurs historiques par défaut) |
 | A28 | Clé web Firebase dans `firebase.js` : publique par conception, mais ses restrictions (référents HTTP) sont **à confirmer** dans Google Cloud | Ouvert |
@@ -109,5 +110,5 @@
 2. Restrictions de la clé web Firebase (A28).
 3. Webhook Stripe : URL, événements abonnés (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`), secret.
 4. Variables Render : présence de `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `FRONTEND_URL`.
-5. Tesseract.js télécharge ses données de langue au premier usage : vérifier que Render l'autorise.
+5. ~~Tesseract.js télécharge ses données de langue au premier usage~~ : résolu, les données sont livrées avec l'application.
 6. Sauvegardes Firestore (export planifié) et test de restauration.

@@ -4,24 +4,26 @@
 
 | Commande | Contenu | Prérequis |
 |---|---|---|
-| `npm test` | Tests API et services (70) — faux services, aucun réseau | Node ≥ 20 |
-| `npm run test:interface` | Tests navigateur Chromium (12, + contrôle d'absence d'erreur JavaScript à chaque test) — Firebase, API et CDN simulés | Playwright 1.56 + Chromium (`npx playwright install chromium` en local) |
-| `npm run test:emulateur` | Règles Firestore (31) + quota, webhooks et historique sur Firestore réel (18) | Java 11+, `firebase-tools` (devDependency) |
+| `npm test` | Tests API et services (86) — faux services, aucun réseau | Node ≥ 20 |
+| `npm run test:interface` | Tests navigateur Chromium (19, + contrôle d'absence d'erreur JavaScript à chaque test) et accessibilité axe-core WCAG 2.2 AA (10) — Firebase, API et CDN simulés | Playwright 1.56 + Chromium (`npx playwright install chromium` en local) |
+| `npm run test:emulateur` | Règles Firestore (31) + quotas, webhooks, historique et suppression de compte sur Firestore réel (26) | Java 11+, `firebase-tools` (devDependency) |
 | `npm run test:tout` | Les trois suites | — |
 
 Aucun test n'utilise de clé réelle, de vrai paiement ni la base de production (projet `demo-adminfacile` sur émulateur).
 
 ## Dernière exécution
 
-**13 octobre 2026**, Node 22.22, Java disponible (lot modules T9) :
+**15 octobre 2026**, Node 22.22, Java disponible (commit `66ed607` et suivants) :
 
 | Suite | Résultat |
 |---|---|
-| `npm test` | 70 / 70 réussis |
-| `npm run test:interface` | 12 / 12 réussis |
-| `npm run test:emulateur` | 49 / 49 réussis |
+| `npm test` | 86 / 86 réussis |
+| `npm run test:interface` | 29 / 29 réussis (19 navigateur + 10 accessibilité) |
+| `npm run test:emulateur` | 57 / 57 réussis |
 
-Contrôle de pertinence : les tests d'interface « XSS » et « Passer Premium » **échouent** sur l'ancien `script.js` et réussissent sur le nouveau.
+Contrôles de pertinence : les tests d'interface « XSS » et « Passer Premium » **échouent** sur l'ancien `script.js` ; les tests « OCR qui dépasse le délai » et « rejet tardif non géré » **échouent** sur l'ancien `documents.js`.
+
+Essai réel hors suite (15/10/2026) : OCR Tesseract sur une image PNG générée → texte « Avis de taxe foncière » reconnu en 0,4 s avec les données de langue livrées ; délai de 5 ms → erreur `OCR_TIMEOUT` sans arrêt du processus.
 
 ## Couverture par exigence
 
@@ -38,13 +40,18 @@ Contrôle de pertinence : les tests d'interface « XSS » et « Passer Premium �
 | LETTER-05 historique | API : pagination bornée, 404 croisé ; émulateur : tri anciennes/nouvelles lettres, propriété ; UI : échappement, « Afficher plus », suppression confirmée |
 | Erreurs réseau (UI) | `interface.test.js` : coupure réseau → message lisible, bouton réactivé |
 | XSS (UI) | `interface.test.js` : HTML dans réponse IA et question affiché en texte |
+| CHAT-01/02 | avertissement visible ; 6e message refusé (402), concurrence 10 → 5, remise à zéro à minuit (Paris), Premium illimité |
+| AUTH-05 suppression | confirmation, connexion récente, données d'un autre intactes, arrêt si Stripe échoue, interface |
+| LETTER-04 / REPLY-02 | modification enregistrée (propriétaire uniquement, validation), export DOCX de la version modifiée, brouillon de réponse modifiable sans appel serveur |
+| DOC-03 OCR | délai maximal, arrêt du moteur, absence de rejet non géré, données de langue présentes |
+| Accessibilité | axe-core WCAG 2.2 AA : connexion, tableau de bord (clair/sombre), paiement réussi, modale, lettre en édition ; 375 px sans défilement horizontal ; Échap et retour du focus |
 
 ## Non couvert à ce jour
 
 - Exports PDF/DOCX (bibliothèques CDN, simulées dans les tests) : recette manuelle.
-- Extraction réelle `pdf-parse` / Tesseract (simulées) : recette manuelle avec de vrais fichiers.
+- Extraction réelle `pdf-parse` (simulée) : recette manuelle avec de vrais PDF. Tesseract : un essai réel ponctuel (ci-dessus), pas dans la suite automatique.
 - Appel réel OpenAI et Stripe en mode test : recette manuelle sur l'environnement de test.
-- Accessibilité et affichage mobile : recette manuelle (phase 5).
+- Accessibilité : les tests automatiques ne remplacent pas un essai au lecteur d'écran (NVDA/VoiceOver) et au clavier seul.
 
 ## Recette manuelle (environnement de test)
 
@@ -70,3 +77,9 @@ Prérequis : API de test déployée avec des clés **Stripe test** et un projet 
 | R15 | Rejouer un webhook depuis le tableau de bord Stripe | Réponse `doublon`, aucun changement | |
 | R16 | Depuis la console du navigateur, tenter `updateDoc(users/<moi>, {premium:true})` | Refusé (règles déployées) | |
 | R17 | Parcours complet sur mobile (375 px) | Utilisable sans défilement horizontal | |
+| R18 | Modifier une lettre générée, « Enregistrer mes modifications », recharger, rouvrir depuis l'historique | Version modifiée affichée ; exports PDF/DOCX identiques | |
+| R19 | Générer une réponse IA, la modifier, exporter en DOCX et PDF | Version modifiée exportée ; rien n'est envoyé | |
+| R20 | Envoyer 6 messages à l'assistant en gratuit | 6e refusé avec message clair ; possible à nouveau le lendemain | |
+| R21 | Supprimer son compte (Premium test) : sans saisir SUPPRIMER, puis correctement | Refus, puis abonnement résilié dans Stripe test, données et compte supprimés, déconnexion | |
+| R22 | Importer une photo floue ou très grande | Analyse ou message « trop de temps » ; le serveur reste disponible (`/api/health`) | |
+| R23 | Navigation au clavier seul et avec un lecteur d'écran | Tous les boutons atteignables ; modales fermées par Échap | |

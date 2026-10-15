@@ -55,6 +55,24 @@ Chaque décision indique son contexte, le choix retenu et ses conséquences. Les
 - Les fonctions appelées par les `onclick` restent exposées sur `window` ; un test d'interface vérifie qu'elles existent toutes et qu'aucune erreur JavaScript ne survient au chargement.
 - Le déplacement de tous les fichiers dans `frontend/` reste reporté (changement du dossier de publication Netlify).
 
+### D-14 · Quota de l'assistant IA (P-03 appliquée par défaut)
+- **Choix :** 5 messages gratuits par jour, remis à zéro à minuit heure de Paris (`usage/{uid}.chatDay`, `chatUsed`), illimité en Premium ; partagé entre l'assistant et le chat document ; message rendu si l'IA échoue. Valeur réglable sans code : `FREE_CHAT_DAILY_LIMIT`.
+- **Conséquence :** comportement proche de l'ancien quota navigateur (5 messages), mais non contournable. Valeur commerciale à confirmer par Joss (P-05).
+
+### D-15 · Suppression de compte
+- **Choix :** `DELETE /api/me`, confirmation saisie (« SUPPRIMER ») et connexion de moins de 10 minutes. Ordre : résiliation immédiate des abonnements Stripe → lettres, analyses, conversations, compteurs, profil → compte Firebase Auth. Si Stripe échoue, rien n'est supprimé et l'utilisateur peut réessayer.
+- **Conservé volontairement :** client et factures Stripe (obligations comptables), journal `stripeEvents` (identifiants techniques sans contenu personnel). **À valider juridiquement (P-04).**
+
+### D-16 · URL de l'API par environnement
+- **Choix :** `js/config.js` choisit l'API **et la configuration Firebase web** selon l'adresse du site (local, prévisualisation Netlify `--`, production). Pas d'outil de build, pas de variable Netlify nécessaire. Sans configuration Firebase de test, repli sur la production : l'API de test refuse alors les tokens (échec sans risque).
+- **Conséquence :** l'environnement de test suppose un service Render nommé `adminfacile-test` et l'ajout des URL de prévisualisation Netlify dans `CORS_ORIGINS` de ce service.
+
+### D-17 · OCR
+- **Choix :** un moteur Tesseract par image, arrêté après usage ; délai maximal 30 s (`OCR_TIMEOUT_SECONDS`) ; données de langue française livrées (`@tesseract.js-data/fra`, +7 Mo dans `node_modules`), sans cache disque. Pas de file d'attente : les limites de débit par utilisateur suffisent au volume actuel, à réévaluer selon la charge.
+
+### D-18 · Édition avant export
+- **Choix :** la lettre affichée devient modifiable (`contenteditable="plaintext-only"`) ; « Enregistrer mes modifications » envoie `PUT /api/letters/:id` (propriétaire uniquement, 20 000 caractères max). Les exports utilisent toujours le texte affiché. La réponse IA est un brouillon modifiable (zone de texte), exportable en PDF et DOCX, jamais envoyée par l'application.
+
 ### D-11 · Tests
 - `node:test` + `supertest` (aucun framework lourd) ; émulateur Firestore via `firebase-tools` ; Playwright pour l'interface avec Firebase/API/CDN simulés.
 
@@ -64,6 +82,6 @@ Chaque décision indique son contexte, le choix retenu et ses conséquences. Les
 |---|---|---|
 | P-01 | Déployer `firestore.rules` en production | **Validé par Joss (13/10/2026)** ; publication à faire par Joss (identifiants requis) |
 | P-02 | Paiement échoué : retirer le Premium immédiatement (actuel) ou attendre la fin des relances Stripe (`past_due` → `canceled`) | Garder l'actuel jusqu'à décision |
-| P-03 | Quota serveur de l'assistant IA (CHAT-02) : nombre de messages gratuits et période | 5 messages / jour en gratuit |
-| P-04 | Durée de conservation des analyses et conversations (DOC-06, RGPD) | À définir avec validation juridique |
+| P-03 | Quota serveur de l'assistant IA (CHAT-02) : nombre de messages gratuits et période | **Appliqué par défaut** : 5 messages / jour (D-14), modifiable par variable d'environnement |
+| P-04 | Durée de conservation des lettres, analyses et conversations (DOC-06, RGPD) ; données conservées après suppression de compte (D-15) | À définir avec validation juridique ; aujourd'hui : conservation jusqu'à suppression par l'utilisateur |
 | P-05 | Prix et limites Free/Premium (BILLING-06) | Inchangés (3 lettres, prix Stripe actuel) |

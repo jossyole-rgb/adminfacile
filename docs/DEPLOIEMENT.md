@@ -15,7 +15,7 @@
 
 Voir `.env.example`. **Obligatoires** (arrêt au démarrage si absentes) : `OPENAI_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`.
 **Nécessaires au Premium** : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`.
-**Optionnelles** : `FRONTEND_URL` (défaut : URL Netlify actuelle), `CORS_ORIGINS`, `OPENAI_MODEL`, `FREE_LETTER_LIMIT`, `MAX_UPLOAD_MB`.
+**Optionnelles** : `FRONTEND_URL` (défaut : URL Netlify actuelle), `CORS_ORIGINS`, `OPENAI_MODEL`, `FREE_LETTER_LIMIT` (3), `FREE_CHAT_DAILY_LIMIT` (5), `MAX_UPLOAD_MB` (8), `OCR_TIMEOUT_SECONDS` (30).
 
 Ne jamais committer `.env`, de clé `sk_live_…`, de secret `whsec_…` ou de compte de service Firebase.
 
@@ -26,9 +26,11 @@ L'API exige désormais un token Firebase sur **toutes** les routes privées. L'a
 Procédure proposée :
 
 1. **Environnement de test** (recommandé avant toute mise en production) :
-   - Projet Firebase de test, clés Stripe test, service Render de test, déploiement Netlify de prévisualisation de `develop`.
-   - Dans `script.js`, `API_URL` pointe vers l'API de test (à rendre configurable par environnement).
-   - Exécuter la recette `docs/TESTS_ET_RECETTE.md`.
+   - Projet Firebase de test (Authentication email/mot de passe + Firestore) ; publier `firestore.rules` dessus.
+   - Service Render **`adminfacile-test`** (URL attendue par `js/config.js` : `https://adminfacile-test.onrender.com`) branché sur `develop`, avec le compte de service du projet Firebase de test, des clés **Stripe test** (`sk_test_…`, prix test, webhook test vers `/webhook`) et `FRONTEND_URL` = URL de prévisualisation Netlify.
+   - `CORS_ORIGINS` du service de test : l'URL de prévisualisation Netlify de `develop` (ex. `https://develop--<site>.netlify.app`).
+   - Netlify : activer les déploiements de branche pour `develop`. Le frontend détecte seul l'API de test (adresse contenant `--`). Renseigner la configuration web du projet Firebase de test dans `CONFIGS_FIREBASE.test` (`js/config.js`, valeurs publiques de la console Firebase → Paramètres du projet). Tant qu'elle est vide, le site de test utilise le projet de production pour la connexion et l'API de test refuse ses tokens (401) : aucune donnée de production n'est touchée.
+   - Exécuter la recette `docs/TESTS_ET_RECETTE.md` (R1–R23).
 2. **Sauvegarde Firestore** avant mise en production : `gcloud firestore export gs://<bucket>/backup-<date>`.
 3. **Règles Firestore** (validé par Joss le 13/10/2026). Les règles sont compatibles avec le frontend actuellement en production : elles peuvent être publiées dès maintenant, indépendamment de l'API.
    - **Avant :** console Firebase → Firestore Database → Règles → copier les règles actuelles dans un fichier (retour arrière).
@@ -56,4 +58,4 @@ npm run test:tout      # toutes les suites
 
 ## Installation de Render
 
-`firebase-tools` et `playwright` sont des devDependencies (tests). Pour alléger le build Render, utiliser `npm ci --omit=dev` comme commande de build.
+`firebase-tools`, `playwright` et les outils de test sont des devDependencies. Pour alléger le build Render, utiliser `npm ci --omit=dev` comme commande de build. Les données de langue OCR (`@tesseract.js-data/fra`) sont une dépendance de production : aucun téléchargement au démarrage.
