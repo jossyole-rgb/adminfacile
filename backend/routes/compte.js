@@ -5,7 +5,7 @@
 const express = require("express");
 const { exigerEmailVerifie } = require("../middleware/auth");
 
-function creerRoutesCompte({ verifierUtilisateur, comptes, facturation, lettres }) {
+function creerRoutesCompte({ verifierUtilisateur, comptes, facturation, lettres, suppression }) {
   const router = express.Router();
 
   router.get("/api/health", (req, res) => {
@@ -22,6 +22,34 @@ function creerRoutesCompte({ verifierUtilisateur, comptes, facturation, lettres 
         emailVerified: req.user.email_verified === true,
         ...etat,
       });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /* ---------- Suppression du compte et de ses données ---------- */
+
+  router.delete("/api/me", verifierUtilisateur, async (req, res, next) => {
+    try {
+      if (!req.body || req.body.confirmation !== "SUPPRIMER") {
+        return res.status(400).json({
+          error: "Confirmation requise : saisis SUPPRIMER pour supprimer ton compte.",
+          code: "CONFIRMATION_REQUIRED",
+        });
+      }
+
+      // Exige une connexion récente (moins de 10 minutes) pour une action irréversible.
+      const ageConnexion = Date.now() / 1000 - (req.user.auth_time || 0);
+
+      if (ageConnexion > 10 * 60) {
+        return res.status(401).json({
+          error: "Pour des raisons de sécurité, reconnecte-toi puis recommence la suppression.",
+          code: "RECENT_LOGIN_REQUIRED",
+        });
+      }
+
+      const resultat = await suppression.supprimerCompte(req.user.uid);
+      return res.json({ supprime: true, ...resultat });
     } catch (error) {
       return next(error);
     }

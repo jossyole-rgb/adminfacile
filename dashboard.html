@@ -256,6 +256,22 @@
         </button>
       </div>
     </div>
+
+    <details class="zone-compte">
+      <summary>Supprimer mon compte</summary>
+
+      <p>
+        Cette action supprime définitivement ton compte, tes lettres, tes analyses et tes conversations.
+        Un abonnement Premium en cours est résilié. Les factures restent conservées par Stripe pour les obligations comptables.
+      </p>
+
+      <label for="confirmationSuppression">Pour confirmer, saisis SUPPRIMER</label>
+      <input id="confirmationSuppression" type="text" autocomplete="off" />
+
+      <button id="btnSupprimerCompte" class="btn-delete" onclick="supprimerMonCompte()">
+        Supprimer définitivement mon compte
+      </button>
+    </details>
   </section>
 
   <section class="historique-box">

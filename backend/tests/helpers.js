@@ -6,8 +6,11 @@
 const { creerApp } = require("../app");
 const { chargerConfig } = require("../config");
 
+const maintenant = () => Math.floor(Date.now() / 1000);
+
 const TOKENS = {
-  "token-alice": { uid: "alice", email: "alice@example.test", email_verified: true },
+  "token-alice": { uid: "alice", email: "alice@example.test", email_verified: true, auth_time: maintenant() },
+  "token-alice-ancien": { uid: "alice", email: "alice@example.test", email_verified: true, auth_time: maintenant() - 3600 },
   "token-bob": { uid: "bob", email: "bob@example.test", email_verified: true },
   "token-non-verifie": { uid: "carol", email: "carol@example.test", email_verified: false },
 };
@@ -114,7 +117,14 @@ function creerFauxServices(surcharges = {}) {
     },
   };
 
-  return { services: { ia, comptes, facturation, documents, lettres }, appels, quota, enregistrees };
+  const suppression = {
+    async supprimerCompte(uid) {
+      appels.push({ methode: "supprimerCompte", args: [uid] });
+      return { abonnementsResilies: 0, documentsSupprimes: {} };
+    },
+  };
+
+  return { services: { ia, comptes, facturation, documents, lettres, suppression }, appels, quota, enregistrees };
 }
 
 function creerAppTest(options = {}) {

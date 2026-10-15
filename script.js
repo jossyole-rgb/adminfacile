@@ -11,3 +11,4 @@ import "./js/letters.js";
 import "./js/billing.js";
 import "./js/assistant.js";
 import "./js/documents.js";
+import "./js/compte.js";

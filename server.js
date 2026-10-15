@@ -19,6 +19,7 @@ const { creerServiceComptes } = require("./backend/services/comptes");
 const { creerServiceFacturation } = require("./backend/services/facturation");
 const { creerServiceDocuments } = require("./backend/services/documents");
 const { creerServiceLettres } = require("./backend/services/lettres");
+const { creerServiceSuppression } = require("./backend/services/suppression");
 
 
 /* =========================
@@ -86,6 +87,11 @@ const app = creerApp({
     }),
     facturation: creerServiceFacturation({ db: firestore, stripe, config }),
     lettres: creerServiceLettres(firestore),
+    suppression: creerServiceSuppression({
+      db: firestore,
+      stripe,
+      supprimerUtilisateurAuth: (uid) => admin.auth().deleteUser(uid),
+    }),
     documents: creerServiceDocuments({
       pdfParse,
       ocr: (buffer, langue) => Tesseract.recognize(buffer, langue),

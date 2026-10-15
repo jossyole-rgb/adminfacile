@@ -36,6 +36,7 @@ describe("Authentification des routes privées", () => {
     ["get", "/api/letters"],
     ["get", "/api/letters/lettre-alice"],
     ["delete", "/api/letters/lettre-alice"],
+    ["delete", "/api/me"],
   ];
 
   for (const [methode, route] of routesPrivees) {
@@ -384,6 +385,35 @@ describe("Historique des lettres", () => {
     const { app } = creerAppTest();
     assert.equal((await request(app).delete("/api/letters/lettre-alice").set("Authorization", "Bearer token-alice")).status, 204);
     assert.equal((await request(app).delete("/api/letters/lettre-alice").set("Authorization", "Bearer token-bob")).status, 404);
+  });
+});
+
+describe("Suppression de compte", () => {
+  test("exige la confirmation SUPPRIMER", async () => {
+    const { app, appels } = creerAppTest();
+    const res = await request(app).delete("/api/me").set("Authorization", "Bearer token-alice").send({ confirmation: "oui" });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, "CONFIRMATION_REQUIRED");
+    assert.equal(appels.length, 0);
+  });
+
+  test("exige une connexion récente", async () => {
+    const { app, appels } = creerAppTest();
+    const res = await request(app).delete("/api/me").set("Authorization", "Bearer token-alice-ancien").send({ confirmation: "SUPPRIMER" });
+    assert.equal(res.status, 401);
+    assert.equal(res.body.code, "RECENT_LOGIN_REQUIRED");
+    assert.equal(appels.length, 0);
+  });
+
+  test("supprime uniquement le compte du token", async () => {
+    const { app, appels } = creerAppTest();
+    const res = await request(app)
+      .delete("/api/me")
+      .set("Authorization", "Bearer token-alice")
+      .send({ confirmation: "SUPPRIMER", uid: "bob" });
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(appels.find((a) => a.methode === "supprimerCompte").args, ["alice"]);
   });
 });
 

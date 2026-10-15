@@ -299,3 +299,24 @@ test("lettre générée : plus d'écriture Firestore côté navigateur", async (
   await page.waitForFunction(() => document.getElementById("notification").innerText.includes("sauvegardée"));
   assert.equal(await page.evaluate(() => window.__ajouts || 0), 0);
 });
+
+test("suppression de compte : confirmation obligatoire puis appel DELETE /api/me", async () => {
+  reponsesAPI["DELETE /api/me"] = { status: 200, body: { supprime: true } };
+
+  await page.click(".zone-compte summary");
+  await page.fill("#confirmationSuppression", "supprimer");
+  await page.click("#btnSupprimerCompte");
+  await page.waitForFunction(() => document.getElementById("notification").innerText.includes("Saisis SUPPRIMER"));
+  assert.equal(requetesAPI.filter((r) => r.methode === "DELETE").length, 0);
+
+  await page.fill("#confirmationSuppression", "SUPPRIMER");
+  const attente = page.waitForRequest((r) => r.method() === "DELETE");
+  await page.click("#btnSupprimerCompte");
+  await attente;
+  await page.waitForURL(/index\.html$/);
+
+  const appel = requetesAPI.find((r) => r.methode === "DELETE");
+  assert.equal(appel.chemin, "/api/me");
+  assert.deepEqual(JSON.parse(appel.body), { confirmation: "SUPPRIMER" });
+  assert.equal(appel.headers.authorization, "Bearer token-test-alice");
+});

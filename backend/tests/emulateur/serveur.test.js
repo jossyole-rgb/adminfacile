@@ -9,6 +9,7 @@ const admin = require("firebase-admin");
 const { creerServiceComptes } = require("../../services/comptes");
 const { creerServiceFacturation } = require("../../services/facturation");
 const { creerServiceLettres } = require("../../services/lettres");
+const { creerServiceSuppression } = require("../../services/suppression");
 const { chargerConfig } = require("../../config");
 const { silencieux } = require("../helpers");
 
@@ -294,5 +295,75 @@ describe("Historique des lettres (Firestore réel)", () => {
     const lettre = await lettres.lire("alice", id);
     assert.equal(lettre.contenu, "Texte complet");
     assert.ok(lettre.createdAt > 0);
+  });
+});
+
+describe("Suppression de compte (Firestore réel, Stripe et Auth simulés)", () => {
+  function fauxStripe({ echoue = false } = {}) {
+    const resilies = [];
+    return {
+      resilies,
+      subscriptions: {
+        async list({ customer }) {
+          if (echoue) throw new Error("Stripe indisponible");
+          return {
+            data: customer === "cus_alice"
+              ? [{ id: "sub_actif", status: "active" }, { id: "sub_ancien", status: "canceled" }]
+              : [],
+          };
+        },
+        async cancel(id) {
+          resilies.push(id);
+        },
+      },
+    };
+  }
+
+  async function peupler() {
+    await db.doc("users/alice").set({ email: "alice@example.test", stripeCustomerId: "cus_alice", premium: true, subscriptionStatus: "active" });
+    await db.doc("usage/alice").set({ lettersUsed: 2 });
+    for (let i = 0; i < 3; i++) await db.collection("lettres").add({ userId: "alice", contenu: `L${i}` });
+    await db.collection("analyses").add({ userId: "alice", resume: "A" });
+    await db.collection("documentChats").add({ userId: "alice", question: "Q" });
+    await db.doc("users/bob").set({ email: "bob@example.test" });
+    await db.collection("lettres").add({ userId: "bob", contenu: "à garder" });
+  }
+
+  test("résilie l'abonnement actif, supprime toutes les données d'alice et son compte Auth, rien de bob", async () => {
+    await peupler();
+    const stripe = fauxStripe();
+    const supprimes = [];
+    const service = creerServiceSuppression({ db, stripe, supprimerUtilisateurAuth: async (uid) => supprimes.push(uid), logger: silencieux });
+
+    const resultat = await service.supprimerCompte("alice");
+
+    assert.deepEqual(stripe.resilies, ["sub_actif"]);
+    assert.deepEqual(resultat.documentsSupprimes, { lettres: 3, analyses: 1, documentChats: 1 });
+    assert.deepEqual(supprimes, ["alice"]);
+    assert.equal((await db.doc("users/alice").get()).exists, false);
+    assert.equal((await db.doc("usage/alice").get()).exists, false);
+    for (const nom of ["lettres", "analyses", "documentChats"]) {
+      assert.equal((await db.collection(nom).where("userId", "==", "alice").get()).size, 0);
+    }
+    assert.equal((await db.doc("users/bob").get()).exists, true);
+    assert.equal((await db.collection("lettres").where("userId", "==", "bob").get()).size, 1);
+  });
+
+  test("si Stripe échoue, rien n'est supprimé", async () => {
+    await peupler();
+    const supprimes = [];
+    const service = creerServiceSuppression({ db, stripe: fauxStripe({ echoue: true }), supprimerUtilisateurAuth: async (uid) => supprimes.push(uid), logger: silencieux });
+
+    await assert.rejects(service.supprimerCompte("alice"), (e) => e.status === 502 && e.code === "BILLING_CANCEL_FAILED");
+    assert.equal((await db.doc("users/alice").get()).exists, true);
+    assert.equal((await db.collection("lettres").where("userId", "==", "alice").get()).size, 3);
+    assert.deepEqual(supprimes, []);
+  });
+
+  test("compte sans abonnement ni données : suppression sans erreur", async () => {
+    const supprimes = [];
+    const service = creerServiceSuppression({ db, stripe: fauxStripe(), supprimerUtilisateurAuth: async (uid) => supprimes.push(uid), logger: silencieux });
+    await service.supprimerCompte("vide");
+    assert.deepEqual(supprimes, ["vide"]);
   });
 });
