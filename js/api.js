@@ -5,7 +5,9 @@
 
 import { etat } from "./etat.js";
 
-export const API_URL = "https://adminfacile.onrender.com";
+import { API_URL } from "./config.js";
+
+export { API_URL };
 
 
 /* =========================

@@ -2,23 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Paiement réussi - AdminFacile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paiement reçu - AdminFacile</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <main class="container">
-    <h1>Paiement réussi 🎉</h1>
+    <h1>Merci pour ton abonnement 🎉</h1>
 
-    <p>
-      Merci pour ton abonnement Premium.
-      Ton compte AdminFacile Premium est maintenant activé.
+    <p id="statutActivation" role="status" aria-live="polite">
+      Paiement reçu. Activation de ton compte Premium en cours…
     </p>
 
-    <a href="index.html">
-      Retourner à AdminFacile
+    <a href="dashboard.html">
+      Aller à mon tableau de bord
     </a>
   </main>
+
+  <script type="module" src="js/succes.js"></script>
 
 </body>
 </html>

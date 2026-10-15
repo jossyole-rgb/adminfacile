@@ -12,7 +12,8 @@ const path = require("node:path");
 const { chromium } = require("playwright");
 
 const RACINE = path.join(__dirname, "..");
-const API = "https://adminfacile.onrender.com";
+// Pages servies depuis 127.0.0.1 : environnement « local » (js/config.js).
+const API = "http://localhost:3000";
 
 const FAUX_FIREBASE_APP = `export function initializeApp() { return {}; }`;
 
@@ -319,4 +320,38 @@ test("suppression de compte : confirmation obligatoire puis appel DELETE /api/me
   assert.equal(appel.chemin, "/api/me");
   assert.deepEqual(JSON.parse(appel.body), { confirmation: "SUPPRIMER" });
   assert.equal(appel.headers.authorization, "Bearer token-test-alice");
+});
+
+test("URL de l'API selon l'adresse du site", async () => {
+  const resultats = await page.evaluate(async () => {
+    const { detecterEnvironnement } = await import("/js/config.js");
+    return [
+      "adminfacile-app.netlify.app",
+      "develop--adminfacile-app.netlify.app",
+      "deploy-preview-3--adminfacile-app.netlify.app",
+      "localhost",
+      "127.0.0.1",
+      "exemple--pirate.com",
+    ].map(detecterEnvironnement);
+  });
+
+  assert.deepEqual(resultats, ["production", "test", "test", "local", "local", "production"]);
+});
+
+test("page de paiement réussi : Premium annoncé seulement après confirmation du serveur", async () => {
+  reponsesAPI["/api/me"] = { status: 200, body: { premium: false } };
+
+  const adresse = serveur.address();
+  await page.goto(`http://127.0.0.1:${adresse.port}/success.html`);
+  await page.waitForFunction(() => document.getElementById("statutActivation").innerText.includes("en cours"));
+
+  reponsesAPI["/api/me"] = { status: 200, body: { premium: true } };
+  await page.waitForFunction(
+    () => document.getElementById("statutActivation").innerText.includes("Premium est actif"),
+    null,
+    { timeout: 10000 }
+  );
+
+  const appels = requetesAPI.filter((r) => r.chemin === "/api/me" && r.headers.authorization === "Bearer token-test-alice");
+  assert.ok(appels.length >= 2);
 });
