@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owner() { return signedIn() && resource.data.userId == request.auth.uid; }
+    function creatingOwn() { return signedIn() && request.resource.data.userId == request.auth.uid; }
+    // Compatibilité avec l’ancienne interface : création d’un profil gratuit seulement.
+    // Les droits Premium et identifiants Stripe restent exclusivement gérés par le serveur.
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email','name','createdAt','premium','subscriptionStatus','stripeCustomerId'])
+        && request.resource.data.get('premium', false) == false
+        && request.resource.data.get('subscriptionStatus', 'inactive') in ['inactive','free']
+        && request.resource.data.get('stripeCustomerId', null) == null;
+      allow update, delete: if false;
+    }
+    match /{collection}/{id} {
+      allow create: if collection in ['lettres','analyses','documentChats'] && creatingOwn();
+      allow read, delete: if collection in ['lettres','analyses','documentChats'] && owner();
+      allow update: if collection in ['lettres','analyses','documentChats'] && owner()
+        && request.resource.data.userId == request.auth.uid;
+    }
+    // usage, stripeEvents et toutes les autres collections : serveur uniquement.
+  }
+}

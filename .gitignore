@@ -1,3 +1,12 @@
 node_modules
 .env
 .DS_Store
+dist/
+*.log
+.env.*
+!.env.example
+.secrets/
+*adminsdk*.json
+*service-account*.json
+*service_account*.json
+.env.tmp
