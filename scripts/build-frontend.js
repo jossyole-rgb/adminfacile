@@ -3,6 +3,11 @@ const path = require("node:path");
 const root = path.resolve(__dirname, ".."),
   out = path.join(root, "dist");
 fs.mkdirSync(out, { recursive: true });
+// Les téléversements manuels Netlify doivent aussi conserver le relais API.
+fs.writeFileSync(
+  path.join(out, "_redirects"),
+  "/api/* https://adminfacile.onrender.com/api/:splat 200!\n",
+);
 for (const name of [
   "index.html",
   "app.html",

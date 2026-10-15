@@ -7,8 +7,10 @@ const { createFirebase } = require("../backend/firebase");
 const { FirestoreStore } = require("../backend/firestore-store");
 const { pdf } = require("../backend/exports");
 const base = process.env.SMOKE_BASE_URL || "http://127.0.0.1:3000";
-if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(base))
-  throw Error("Recette limitée au serveur local.");
+if (
+  !/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(base) &&
+  !["https://adminfacile.onrender.com", "https://adminfacile-app.netlify.app"].includes(base)
+) throw Error("Hôte de recette AdminFacile non autorisé.");
 const created = [];
 const results = [];
 function mark(name) {
