@@ -15,9 +15,13 @@ import { mettreAJourDashboard } from "./dashboard.js";
 ========================= */
 
 window.reinitialiserMotDePasse = async function () {
-  const email = prompt("Entrez votre email :");
+  const email = document.getElementById("email")?.value.trim();
 
-  if (!email) return;
+  if (!email) {
+    afficherNotification("Saisis ton email dans le champ ci-dessus, puis clique à nouveau sur « Mot de passe oublié ».");
+    document.getElementById("email")?.focus();
+    return;
+  }
 
   try {
     await sendPasswordResetEmail(auth, email);
@@ -81,8 +85,6 @@ window.creerCompte = async function () {
     );
 
     await sendEmailVerification(userCredential.user);
-
-    alert("Compte créé ! Vérifie ton email avant connexion.");
 
     const user = userCredential.user;
 

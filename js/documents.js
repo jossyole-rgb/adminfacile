@@ -6,7 +6,7 @@
 import { db } from "../firebase.js";
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { etat } from "./etat.js";
-import { afficherLoader, afficherNotification, afficherToast, echapperHTML, masquerLoader, texteMultiligne } from "./ui.js";
+import { afficherLoader, afficherNotification, afficherToast, echapperHTML, focaliserModale, masquerLoader, restaurerFocus, texteMultiligne } from "./ui.js";
 import { appelerAPI } from "./api.js";
 
 
@@ -364,6 +364,7 @@ window.afficherModalReponseIA = function (texte) {
 
   content.textContent = texte;
   modal.style.display = "flex";
+  focaliserModale(modal);
   document.body.classList.add("modal-open");
 };
 
@@ -374,6 +375,7 @@ window.fermerModalReponseIA = function () {
 
   modal.style.display = "none";
   document.body.classList.remove("modal-open");
+  restaurerFocus();
 };
 
 window.copierReponseIA = function () {
@@ -466,6 +468,7 @@ window.voirAnalyse = async function (id) {
     `;
 
     modal.style.display = "flex";
+    focaliserModale(modal);
     document.body.classList.add("modal-open");
   } catch (error) {
     console.error("Erreur ouverture analyse :", error);
@@ -480,6 +483,7 @@ window.fermerAnalyseModal = function () {
 
   modal.style.display = "none";
   document.body.classList.remove("modal-open");
+  restaurerFocus();
 };
 
 

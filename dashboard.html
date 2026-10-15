@@ -11,7 +11,9 @@
 
 <body>
 
-  <div id="notification" class="notification"></div>
+  <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+
+  <div id="notification" class="notification" role="status" aria-live="polite"></div>
 
   <nav class="navbar">
       <div class="logo">AdminFacile</div>
@@ -27,7 +29,7 @@
       </div>
   </nav>
 
-  <main class="container">
+  <main id="contenu" class="container">
     <h1>Générer une lettre</h1>
     <p>
       Crée une lettre administrative personnalisée en quelques secondes.
@@ -92,7 +94,7 @@
       <p>L’IA rédige votre lettre...</p>
     </div>
 
-    <section id="resultat" class="resultat">
+    <section id="resultat" class="resultat" aria-live="polite" aria-label="Lettre générée">
       ✨ Votre lettre apparaîtra ici après génération.
     </section>
 
@@ -143,8 +145,9 @@
     <section class="chat-box">
       <h2>🤖 Assistant administratif IA</h2>
 
-      <div id="chatMessages" class="chat-messages"></div>
+      <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
 
+      <label for="chatInput" class="visuellement-cache">Ta question administrative</label>
       <textarea
         id="chatInput"
         placeholder="Pose ta question administrative..."
@@ -164,6 +167,7 @@
           Ajoute un justificatif, un courrier ou un document administratif à analyser.
         </p>
 
+        <label for="documentUpload">Documents à analyser (PDF, PNG ou JPG, 8 Mo maximum)</label>
         <input
           type="file"
           id="documentUpload"
@@ -175,7 +179,7 @@
         🔍 Analyser le document
       </button>
 
-      <div id="analyseDocumentResultat" class="resultat">
+      <div id="analyseDocumentResultat" class="resultat" aria-live="polite">
         L’analyse du document apparaîtra ici.
       </div>
     </section>
@@ -189,6 +193,7 @@
 
   <div id="documentChatMessages" class="chat-messages"></div>
 
+  <label for="documentChatInput" class="visuellement-cache">Ta question sur le document</label>
   <textarea
     id="documentChatInput"
     placeholder="Ex : Que dois-je faire avec ce document ?"
@@ -300,17 +305,17 @@
   <script type="module" src="firebase.js"></script>
   <script type="module" src="script.js"></script>
 
-  <div id="analyseModal" class="modal-overlay">
+  <div id="analyseModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Analyse complète">
   <div class="modal-content">
-    <button class="modal-close" onclick="fermerAnalyseModal()">×</button>
+    <button class="modal-close" onclick="fermerAnalyseModal()" aria-label="Fermer">×</button>
 
     <div id="analyseModalContent"></div>
   </div>
 </div>
 
-  <div id="toastContainer" class="toast-container"></div>
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-  <div id="confirmModal" class="modal-overlay">
+  <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Confirmation de suppression">
   <div class="confirm-content">
     <h3>🗑️ Supprimer cette analyse ?</h3>
     <p>Cette action est définitive.</p>
@@ -334,9 +339,9 @@
   </div>
 </div>
 
-<div id="reponseIAModal" class="modal-overlay">
+<div id="reponseIAModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Réponse IA générée">
   <div class="modal-content ia-modal-content">
-    <button class="modal-close" onclick="fermerModalReponseIA()">×</button>
+    <button class="modal-close" onclick="fermerModalReponseIA()" aria-label="Fermer">×</button>
 
     <div class="ia-header">
       <h2>🤖 Réponse IA générée</h2>

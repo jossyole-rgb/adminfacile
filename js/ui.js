@@ -132,6 +132,7 @@ window.ouvrirConfirmModal = function (onConfirm, titre = "🗑️ Supprimer cett
   }
 
   modal.style.display = "flex";
+  focaliserModale(modal);
 
   confirmBtn.onclick = () => {
     onConfirm();
@@ -145,4 +146,46 @@ window.fermerConfirmModal = function () {
   if (!modal) return;
 
   modal.style.display = "none";
+  restaurerFocus();
 };
+
+
+/* =========================
+   MODALES : CLAVIER ET FOCUS
+   Le focus entre dans la modale à l'ouverture, Échap la ferme
+   et le focus revient sur l'élément qui l'avait ouverte.
+========================= */
+
+let elementAvantModale = null;
+
+export function focaliserModale(modal) {
+  elementAvantModale = document.activeElement;
+
+  const cible = modal.querySelector("input, textarea, select, button");
+
+  if (cible) {
+    cible.focus();
+  }
+}
+
+export function restaurerFocus() {
+  if (elementAvantModale && typeof elementAvantModale.focus === "function") {
+    elementAvantModale.focus();
+  }
+
+  elementAvantModale = null;
+}
+
+document.addEventListener("keydown", (evenement) => {
+  if (evenement.key !== "Escape") return;
+
+  const ouverte = [...document.querySelectorAll(".modal-overlay")].find(
+    (modal) => modal.style.display === "flex"
+  );
+
+  if (!ouverte) return;
+
+  ouverte.style.display = "none";
+  document.body.classList.remove("modal-open");
+  restaurerFocus();
+});

@@ -11,7 +11,7 @@
 
 <body>
 
-  <div id="notification" class="notification"></div>
+  <div id="notification" class="notification" role="status" aria-live="polite"></div>
 
   <nav class="navbar">
     <div class="logo">AdminFacile</div>
@@ -37,8 +37,10 @@
   <section class="auth-box">
     <h2>Connexion</h2>
 
-    <input id="email" type="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Mot de passe" />
+    <label for="email" class="visuellement-cache">Email</label>
+    <input id="email" type="email" placeholder="Email" autocomplete="email" />
+    <label for="password" class="visuellement-cache">Mot de passe</label>
+    <input id="password" type="password" placeholder="Mot de passe" autocomplete="current-password" />
 
     <div class="actions">
       <button onclick="creerCompte()">Créer un compte</button>
