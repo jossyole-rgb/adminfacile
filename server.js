@@ -18,6 +18,7 @@ const { creerServiceIA } = require("./backend/services/ia");
 const { creerServiceComptes } = require("./backend/services/comptes");
 const { creerServiceFacturation } = require("./backend/services/facturation");
 const { creerServiceDocuments } = require("./backend/services/documents");
+const { creerOcrTesseract } = require("./backend/services/ocr");
 const { creerServiceLettres } = require("./backend/services/lettres");
 const { creerServiceSuppression } = require("./backend/services/suppression");
 
@@ -94,7 +95,8 @@ const app = creerApp({
     }),
     documents: creerServiceDocuments({
       pdfParse,
-      ocr: (buffer, langue) => Tesseract.recognize(buffer, langue),
+      delaiOcrMs: config.ocrTimeoutMs,
+      ocr: creerOcrTesseract(Tesseract),
     }),
   },
 });

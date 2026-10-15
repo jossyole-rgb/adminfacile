@@ -29,6 +29,7 @@ function chargerConfig(env = process.env) {
     stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET || "",
     freeLetterLimit: Number(env.FREE_LETTER_LIMIT) || 3,
     freeChatDailyLimit: Number(env.FREE_CHAT_DAILY_LIMIT) || 5,
+    ocrTimeoutMs: (Number(env.OCR_TIMEOUT_SECONDS) || 30) * 1000,
     maxUploadBytes: (Number(env.MAX_UPLOAD_MB) || 8) * 1024 * 1024,
   };
 }

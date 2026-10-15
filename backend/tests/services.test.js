@@ -55,6 +55,43 @@ describe("Détection du type réel des fichiers", () => {
     assert.match(texte, /Document 2 ---\nTexte image/);
   });
 
+  test("arrête l'OCR qui dépasse le délai (A19)", async () => {
+    let signalRecu;
+    const service = creerServiceDocuments({
+      pdfParse: async () => ({ text: "" }),
+      ocr: (buffer, langue, { signal }) => {
+        signalRecu = signal;
+        return new Promise(() => {});
+      },
+      delaiOcrMs: 20,
+    });
+
+    await assert.rejects(service.extraireTextes([{ mimetype: "image/png", buffer: PNG }]), (e) => {
+      assert.equal(e.status, 400);
+      assert.equal(e.code, "OCR_TIMEOUT");
+      return true;
+    });
+    assert.equal(signalRecu.aborted, true);
+  });
+
+  test("l'échec tardif d'un OCR interrompu ne produit pas de rejet non géré", async () => {
+    const rejetsNonGeres = [];
+    const ecouteur = (raison) => rejetsNonGeres.push(raison);
+    process.on("unhandledRejection", ecouteur);
+
+    const service = creerServiceDocuments({
+      pdfParse: async () => ({ text: "" }),
+      ocr: () => new Promise((_, rejeter) => setTimeout(() => rejeter(new Error("moteur arrêté")), 40)),
+      delaiOcrMs: 10,
+    });
+
+    await assert.rejects(service.extraireTextes([{ mimetype: "image/png", buffer: PNG }]), /trop de temps/);
+    await new Promise((r) => setTimeout(r, 80));
+    process.off("unhandledRejection", ecouteur);
+
+    assert.deepEqual(rejetsNonGeres, []);
+  });
+
   test("un PDF illisible donne une erreur claire (400)", async () => {
     const service = creerServiceDocuments({
       pdfParse: async () => {
@@ -127,5 +164,51 @@ describe("Statut Premium", () => {
     assert.equal(estPremium({ premium: true, subscriptionStatus: "past_due" }), false);
     assert.equal(estPremium({ premium: false, subscriptionStatus: "active" }), false);
     assert.equal(estPremium(null), false);
+  });
+});
+
+describe("Adaptateur OCR Tesseract", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const { creerOcrTesseract, DOSSIER_LANGUES } = require("../services/ocr");
+
+  function fauxTesseract() {
+    const appels = { options: null, termine: 0 };
+    return {
+      appels,
+      createWorker: async (langue, oem, options) => {
+        appels.options = options;
+        return {
+          recognize: async () => ({ data: { text: "texte" } }),
+          terminate: async () => {
+            appels.termine += 1;
+          },
+        };
+      },
+    };
+  }
+
+  test("utilise les données françaises livrées, un errorHandler et arrête le moteur", async () => {
+    const tesseract = fauxTesseract();
+    const resultat = await creerOcrTesseract(tesseract, { logger: { error() {} } })(Buffer.from("x"), "fra");
+
+    assert.equal(resultat.data.text, "texte");
+    assert.equal(typeof tesseract.appels.options.errorHandler, "function");
+    assert.equal(tesseract.appels.options.cacheMethod, "none");
+    assert.ok(fs.existsSync(path.join(DOSSIER_LANGUES, "fra.traineddata.gz")));
+    assert.equal(tesseract.appels.termine, 1);
+  });
+
+  test("arrête le moteur si le délai expire pendant son démarrage", async () => {
+    const tesseract = fauxTesseract();
+    const controleur = new AbortController();
+    const lecture = creerOcrTesseract(tesseract, { logger: { error() {} } })(Buffer.from("x"), "fra", {
+      signal: controleur.signal,
+    });
+    controleur.abort();
+
+    await assert.rejects(lecture, /interrompu/);
+    await new Promise((r) => setImmediate(r));
+    assert.equal(tesseract.appels.termine, 1);
   });
 });

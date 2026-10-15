@@ -3,7 +3,7 @@
    Authentification Firebase, création de compte, statut Premium.
 ========================= */
 
-import { db, auth, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "../firebase.js";
+import { db, auth, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "../firebase.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { etat } from "./etat.js";
 import { afficherNotification } from "./ui.js";
@@ -158,3 +158,18 @@ export async function verifierPremium(uid) {
     etat.stripeCustomerId = null;
   }
 }
+
+
+/* =========================
+   DÉCONNEXION
+========================= */
+
+window.deconnexion = async function () {
+  try {
+    await signOut(auth);
+    afficherNotification("Déconnexion effectuée.");
+  } catch (error) {
+    console.error("Erreur déconnexion :", error);
+    afficherNotification("Erreur lors de la déconnexion.");
+  }
+};

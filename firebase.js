@@ -37,90 +37,14 @@ const firebaseConfig = {
 
 /* =========================
    INITIALISATION FIREBASE
+   Ce module ne fait qu'initialiser Firebase : les actions (connexion, création de compte,
+   déconnexion) sont dans js/auth.js. La clé ci-dessus est un identifiant public de projet,
+   pas un secret : l'accès aux données est protégé par les règles Firestore et l'API.
 ========================= */
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-
-/* =========================
-   NOTIFICATIONS
-========================= */
-
-function afficherNotification(message) {
-  const notification = document.getElementById("notification");
-
-  if (!notification) return;
-
-  notification.innerText = message;
-  notification.classList.add("show");
-
-  setTimeout(() => {
-    notification.classList.remove("show");
-  }, 3000);
-}
-
-
-/* =========================
-   CRÉATION DE COMPTE
-========================= */
-
-window.creerCompte = async function () {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (!email || !password) {
-    afficherNotification("Veuillez remplir tous les champs.");
-    return;
-  }
-
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    afficherNotification("Compte créé avec succès !");
-  } catch (error) {
-    console.error("Erreur création compte :", error);
-    afficherNotification("Erreur lors de la création du compte.");
-  }
-};
-
-
-/* =========================
-   CONNEXION UTILISATEUR
-========================= */
-
-window.connexion = async function () {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (!email || !password) {
-    afficherNotification("Veuillez remplir tous les champs.");
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    afficherNotification("Connexion réussie !");
-  } catch (error) {
-    console.error("Erreur connexion :", error);
-    afficherNotification("Email ou mot de passe incorrect.");
-  }
-};
-
-
-/* =========================
-   DÉCONNEXION UTILISATEUR
-========================= */
-
-window.deconnexion = async function () {
-  try {
-    await signOut(auth);
-    afficherNotification("Déconnexion effectuée.");
-  } catch (error) {
-    console.error("Erreur déconnexion :", error);
-    afficherNotification("Erreur lors de la déconnexion.");
-  }
-};
 
 
 /* =========================
