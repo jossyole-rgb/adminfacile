@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-15T17:19:45.019Z",
+  "passed": [
+    "auto-attribution Premium refusée",
+    "profil gratuit autorisé",
+    "modification des droits refusée",
+    "document propriétaire autorisé",
+    "lecture propriétaire autorisée",
+    "lecture étrangère refusée",
+    "transfert de propriétaire refusé",
+    "quota client refusé",
+    "abonnement client refusé",
+    "accès anonyme refusé"
+  ]
+}

@@ -1,57 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>AdminFacile</title>
-
-  <link rel="stylesheet" href="style.css" />
-</head>
-
-<body>
-
-  <div id="notification" class="notification"></div>
-
-  <nav class="navbar">
-    <div class="logo">AdminFacile</div>
-
-    <div class="nav-links">
-      <a href="#">Accueil</a>
-      <a href="#">Services</a>
-      <a href="#">Contact</a>
-
-      <button id="btnTheme" onclick="changerTheme()">
-        🌙 Mode sombre
-      </button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#142b46" />
+    <meta
+      name="description"
+      content="AdminFacile vous aide à rédiger vos courriers et comprendre vos documents administratifs."
+    />
+    <title>AdminFacile — Votre espace personnel</title>
+    <link rel="stylesheet" href="/frontend/css/app.css" />
+    <script type="module" src="/frontend/js/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu</a>
+    <div id="app">
+      <div class="boot" role="status">Chargement de votre espace…</div>
     </div>
-  </nav>
-
-  <header class="hero">
-    <h1>AdminFacile</h1>
-    <p>
-      L’assistant administratif intelligent pour étudiants et jeunes actifs.
-    </p>
-  </header>
-
-  <section class="auth-box">
-    <h2>Connexion</h2>
-
-    <input id="email" type="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Mot de passe" />
-
-    <div class="actions">
-      <button onclick="creerCompte()">Créer un compte</button>
-      <button onclick="connexion()">Connexion</button>
-      <button onclick="deconnexion()">Déconnexion</button>
-      <button onclick="reinitialiserMotDePasse()">🔑 Mot de passe oublié ?</button>
-    </div>
-  </section>
-
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="script.js"></script>
-
-</body>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <dialog id="modal"></dialog>
+  </body>
 </html>
-
-  

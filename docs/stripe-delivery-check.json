@@ -1,0 +1,12 @@
+{
+  "eventId": "evt_1UQsLyGg20bixEhmUSOn1MEt",
+  "type": "product.updated",
+  "received": true,
+  "checkedAt": "2026-10-15T17:22:09.777Z",
+  "payment": false,
+  "duplicateReplayAccepted": true,
+  "legacyAlias": true,
+  "invalidSignatureRejected": true,
+  "endpointId": "we_1UQsKPGg20bixEhmvq5qJ7qC",
+  "oldEndpointsDisabled": true
+}
