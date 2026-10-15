@@ -8,6 +8,5 @@ export const etat = {
   premium: false,
   stripeCustomerId: null,
   emailVerifie: false,
-  nombreMessagesIA: 0,
   analyseCourante: ""
 };

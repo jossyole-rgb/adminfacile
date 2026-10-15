@@ -209,6 +209,42 @@ describe("Autres routes IA", () => {
     assert.equal((await request(app).post("/chat-document").set(auth).send({ question: "Q ?", analyse: "A" })).body.reponse, "réponse-discuterDocument");
   });
 
+  test("assistant : 6e message gratuit du jour refusé (402), l'IA n'est pas appelée", async () => {
+    const { app, appels } = creerAppTest();
+    const auth = { Authorization: "Bearer token-alice" };
+
+    for (let i = 0; i < 5; i++) {
+      const ok = await request(app).post("/chat-admin").set(auth).send({ message: `Question ${i}` });
+      assert.equal(ok.status, 200);
+      assert.equal(ok.body.chatRemainingToday, 4 - i);
+    }
+
+    const res = await request(app).post("/chat-document").set(auth).send({ question: "Q ?", analyse: "A" });
+    assert.equal(res.status, 402);
+    assert.equal(res.body.code, "CHAT_QUOTA_EXCEEDED");
+    assert.equal(appels.filter((a) => a.methode === "discuter" || a.methode === "discuterDocument").length, 5);
+  });
+
+  test("assistant : un échec IA rend le message et un message invalide n'en consomme pas", async () => {
+    const { app, quota } = creerAppTest({ iaEchoue: true });
+    const auth = { Authorization: "Bearer token-alice" };
+
+    assert.equal((await request(app).post("/chat-admin").set(auth).send({ message: "Bonjour" })).status, 502);
+    assert.equal((await request(app).post("/chat-admin").set(auth).send({ message: "" })).status, 400);
+    assert.equal(quota.messages, 0);
+    assert.equal(quota.liberationsMessages, 1);
+  });
+
+  test("assistant : Premium illimité", async () => {
+    const { app, quota } = creerAppTest();
+    quota.premium = true;
+
+    for (let i = 0; i < 7; i++) {
+      const res = await request(app).post("/chat-admin").set("Authorization", "Bearer token-alice").send({ message: "Q" });
+      assert.equal(res.status, 200);
+    }
+  });
+
   test("message de l'assistant trop long → 400", async () => {
     const { app } = creerAppTest();
     const res = await request(app).post("/chat-admin").set("Authorization", "Bearer token-alice").send({ message: "x".repeat(2001) });

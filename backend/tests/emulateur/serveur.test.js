@@ -93,6 +93,44 @@ describe("Quota de génération (transactions Firestore)", () => {
   });
 });
 
+describe("Quota quotidien de l'assistant (transactions Firestore)", () => {
+  test("10 messages simultanés d'un compte gratuit → exactement 5 autorisés", async () => {
+    const comptes = creerServiceComptes(db, { limiteGratuite: 3, limiteMessagesGratuits: 5 });
+    const resultats = await Promise.all(Array.from({ length: 10 }, () => comptes.reserverMessage("alice")));
+    assert.equal(resultats.filter((r) => r.autorise).length, 5);
+  });
+
+  test("le quota repart à zéro le lendemain (heure de Paris)", async () => {
+    const comptes = creerServiceComptes(db, { limiteGratuite: 3, limiteMessagesGratuits: 2 });
+    const soir = new Date("2026-10-15T21:30:00Z"); // 23 h 30 à Paris
+    const lendemain = new Date("2026-10-15T22:30:00Z"); // 0 h 30 à Paris
+
+    await comptes.reserverMessage("alice", soir);
+    await comptes.reserverMessage("alice", soir);
+    assert.equal((await comptes.reserverMessage("alice", soir)).autorise, false);
+    assert.equal((await comptes.reserverMessage("alice", lendemain)).autorise, true);
+  });
+
+  test("utiliser l'assistant n'efface pas l'historique de lettres d'un compte existant", async () => {
+    await db.collection("lettres").add({ userId: "ancien", contenu: "1" });
+    await db.collection("lettres").add({ userId: "ancien", contenu: "2" });
+    await db.collection("lettres").add({ userId: "ancien", contenu: "3" });
+
+    const comptes = creerServiceComptes(db, { limiteGratuite: 3 });
+    await comptes.reserverMessage("ancien");
+
+    assert.equal((await comptes.reserverGeneration("ancien")).autorise, false);
+    assert.equal((await comptes.lireEtatCompte("ancien")).lettersRemaining, 0);
+  });
+
+  test("libération après échec IA", async () => {
+    const comptes = creerServiceComptes(db, { limiteGratuite: 3, limiteMessagesGratuits: 5 });
+    await comptes.reserverMessage("alice");
+    await comptes.libererMessage("alice");
+    assert.equal((await comptes.lireEtatCompte("alice")).chatRemainingToday, 5);
+  });
+});
+
 describe("Facturation Stripe (Firestore réel, Stripe simulé)", () => {
   function fauxStripe() {
     const appels = [];

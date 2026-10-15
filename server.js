@@ -80,7 +80,10 @@ const app = creerApp({
   stripe,
   services: {
     ia: creerServiceIA({ openai, modele: config.openaiModel }),
-    comptes: creerServiceComptes(firestore, { limiteGratuite: config.freeLetterLimit }),
+    comptes: creerServiceComptes(firestore, {
+      limiteGratuite: config.freeLetterLimit,
+      limiteMessagesGratuits: config.freeChatDailyLimit,
+    }),
     facturation: creerServiceFacturation({ db: firestore, stripe, config }),
     lettres: creerServiceLettres(firestore),
     documents: creerServiceDocuments({

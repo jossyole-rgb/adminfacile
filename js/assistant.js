@@ -3,11 +3,8 @@
    Assistant administratif IA.
 ========================= */
 
-import { etat } from "./etat.js";
 import { afficherNotification, texteMultiligne } from "./ui.js";
 import { appelerAPI } from "./api.js";
-
-const LIMITE_MESSAGES_IA = 5;
 
 
 /* =========================
@@ -34,17 +31,7 @@ window.envoyerMessageIA = async function () {
     return;
   }
 
-  if (
-    !etat.premium &&
-    etat.nombreMessagesIA >= LIMITE_MESSAGES_IA
-  ) {
-
-    afficherNotification(
-      "Limite gratuite IA atteinte."
-    );
-
-    return;
-  }
+  // Le quota de messages gratuits est appliqué par le serveur (réponse 402).
 
   /* Message utilisateur */
 
@@ -60,7 +47,9 @@ window.envoyerMessageIA = async function () {
 
     const data = await appelerAPI("/chat-admin", { body: { message: question } });
 
-    etat.nombreMessagesIA++;
+    if (data.chatRemainingToday === 0) {
+      afficherNotification("C’était ton dernier message gratuit aujourd’hui.");
+    }
 
     /* Réponse IA */
 

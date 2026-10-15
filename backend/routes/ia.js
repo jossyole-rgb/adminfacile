@@ -131,15 +131,54 @@ function creerRoutesIA({ verifierUtilisateur, iaLimiter, ia, comptes, documents,
     }
   });
 
-  /* ---------- Assistant administratif ---------- */
+  /* ---------- Assistant administratif (quota quotidien serveur) ---------- */
 
-  router.post("/chat-admin", ...prive, async (req, res, next) => {
+  /**
+   * Exécute un appel IA de conversation en consommant le quota de messages.
+   * Le quota n'est consommé qu'après validation et rendu si l'IA échoue.
+   */
+  async function avecQuotaMessages(req, res, next, appelIA) {
+    const uid = req.user.uid;
+    let reservation;
+
     try {
-      const message = texteRequis(req.body, "message", { max: MAX_MESSAGE, libelle: "message" });
-      return res.json({ reponse: await ia.discuter(message) });
+      reservation = await comptes.reserverMessage(uid);
     } catch (error) {
       return next(error);
     }
+
+    if (!reservation.autorise) {
+      return res.status(402).json({
+        error: `Tu as utilisé tes ${reservation.limite} messages gratuits du jour. Reviens demain ou passe Premium.`,
+        code: "CHAT_QUOTA_EXCEEDED",
+        chatDailyLimit: reservation.limite,
+      });
+    }
+
+    try {
+      const reponse = await appelIA();
+      return res.json({
+        reponse,
+        chatRemainingToday: reservation.premium ? null : Math.max(0, reservation.limite - reservation.utilises),
+      });
+    } catch (error) {
+      await comptes.libererMessage(uid).catch((e) =>
+        logger.error("Impossible de libérer le quota de messages :", e && e.message)
+      );
+      return next(error);
+    }
+  }
+
+  router.post("/chat-admin", ...prive, async (req, res, next) => {
+    let message;
+
+    try {
+      message = texteRequis(req.body, "message", { max: MAX_MESSAGE, libelle: "message" });
+    } catch (error) {
+      return next(error);
+    }
+
+    return avecQuotaMessages(req, res, next, () => ia.discuter(message));
   });
 
   /* ---------- Analyse de documents ---------- */
@@ -191,13 +230,17 @@ function creerRoutesIA({ verifierUtilisateur, iaLimiter, ia, comptes, documents,
   });
 
   router.post("/chat-document", ...prive, async (req, res, next) => {
+    let question;
+    let analyse;
+
     try {
-      const question = texteRequis(req.body, "question", { max: MAX_MESSAGE, libelle: "question" });
-      const analyse = texteRequis(req.body, "analyse", { max: MAX_ANALYSE, libelle: "analyse" });
-      return res.json({ reponse: await ia.discuterDocument(question, analyse) });
+      question = texteRequis(req.body, "question", { max: MAX_MESSAGE, libelle: "question" });
+      analyse = texteRequis(req.body, "analyse", { max: MAX_ANALYSE, libelle: "analyse" });
     } catch (error) {
       return next(error);
     }
+
+    return avecQuotaMessages(req, res, next, () => ia.discuterDocument(question, analyse));
   });
 
   return router;

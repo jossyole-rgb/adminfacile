@@ -2,7 +2,7 @@
    COMPTES, PREMIUM ET QUOTAS
    Collections utilisées :
    - users/{uid}  : profil + statut d'abonnement (écrit uniquement par le serveur pour les champs Premium)
-   - usage/{uid}  : compteur de générations (écrit uniquement par le serveur)
+   - usage/{uid}  : compteurs de générations et de messages IA (écrits uniquement par le serveur)
    - lettres      : historique existant (utilisé pour initialiser le compteur des comptes déjà actifs)
 ========================= */
 
@@ -16,7 +16,25 @@ function estPremium(donneesUtilisateur) {
   );
 }
 
-function creerServiceComptes(db, { limiteGratuite }) {
+/** Jour courant à Paris (AAAA-MM-JJ) : le quota de messages est remis à zéro à minuit. */
+function jourParis(date = new Date()) {
+  return new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris" }).format(date);
+}
+
+/** Nombre de lettres enregistré, ou null si le compteur n'a jamais été initialisé. */
+function lettresComptees(usageSnap) {
+  if (!usageSnap.exists) return null;
+  const valeur = usageSnap.data().lettersUsed;
+  return valeur === undefined ? null : Number(valeur) || 0;
+}
+
+function messagesDuJour(usageSnap, jour) {
+  if (!usageSnap.exists) return 0;
+  const donnees = usageSnap.data();
+  return donnees.chatDay === jour ? Number(donnees.chatUsed) || 0 : 0;
+}
+
+function creerServiceComptes(db, { limiteGratuite, limiteMessagesGratuits = 5 }) {
   const users = db.collection("users");
   const usage = db.collection("usage");
 
@@ -43,11 +61,9 @@ function creerServiceComptes(db, { limiteGratuite }) {
 
       const premium = estPremium(userSnap.exists ? userSnap.data() : null);
 
-      let utilisees;
+      let utilisees = lettresComptees(usageSnap);
 
-      if (usageSnap.exists) {
-        utilisees = Number(usageSnap.data().lettersUsed) || 0;
-      } else {
+      if (utilisees === null) {
         const historique = await transaction.get(
           db.collection("lettres").where("userId", "==", uid).limit(limiteGratuite)
         );
@@ -98,11 +114,9 @@ function creerServiceComptes(db, { limiteGratuite }) {
     const [userSnap, usageSnap] = await db.getAll(users.doc(uid), usage.doc(uid));
     const donnees = userSnap.exists ? userSnap.data() : {};
 
-    let utilisees;
+    let utilisees = lettresComptees(usageSnap);
 
-    if (usageSnap.exists) {
-      utilisees = Number(usageSnap.data().lettersUsed) || 0;
-    } else {
+    if (utilisees === null) {
       const historique = await db
         .collection("lettres")
         .where("userId", "==", uid)
@@ -112,6 +126,7 @@ function creerServiceComptes(db, { limiteGratuite }) {
     }
 
     const premium = estPremium(donnees);
+    const messages = messagesDuJour(usageSnap, jourParis());
 
     return {
       premium,
@@ -120,10 +135,62 @@ function creerServiceComptes(db, { limiteGratuite }) {
       lettersUsed: utilisees,
       freeLimit: limiteGratuite,
       lettersRemaining: premium ? null : Math.max(0, limiteGratuite - utilisees),
+      chatUsedToday: messages,
+      chatDailyLimit: limiteMessagesGratuits,
+      chatRemainingToday: premium ? null : Math.max(0, limiteMessagesGratuits - messages),
     };
   }
 
-  return { lireUtilisateur, reserverGeneration, libererGeneration, lireEtatCompte };
+  /**
+   * Réserve un message de l'assistant IA (quota gratuit quotidien, heure de Paris).
+   * Même principe que les lettres : transaction, Premium illimité, libération en cas d'échec IA.
+   */
+  async function reserverMessage(uid, maintenant = new Date()) {
+    const userRef = users.doc(uid);
+    const usageRef = usage.doc(uid);
+    const jour = jourParis(maintenant);
+
+    return db.runTransaction(async (transaction) => {
+      const [userSnap, usageSnap] = await transaction.getAll(userRef, usageRef);
+      const premium = estPremium(userSnap.exists ? userSnap.data() : null);
+      const utilises = messagesDuJour(usageSnap, jour);
+
+      if (!premium && utilises >= limiteMessagesGratuits) {
+        return { autorise: false, premium, utilises, limite: limiteMessagesGratuits };
+      }
+
+      transaction.set(
+        usageRef,
+        { chatDay: jour, chatUsed: utilises + 1, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true }
+      );
+
+      return { autorise: true, premium, utilises: utilises + 1, limite: limiteMessagesGratuits };
+    });
+  }
+
+  async function libererMessage(uid, maintenant = new Date()) {
+    const usageRef = usage.doc(uid);
+    const jour = jourParis(maintenant);
+
+    await db.runTransaction(async (transaction) => {
+      const snap = await transaction.get(usageRef);
+      const utilises = messagesDuJour(snap, jour);
+
+      if (utilises > 0) {
+        transaction.set(usageRef, { chatUsed: utilises - 1, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      }
+    });
+  }
+
+  return {
+    lireUtilisateur,
+    reserverGeneration,
+    libererGeneration,
+    lireEtatCompte,
+    reserverMessage,
+    libererMessage,
+  };
 }
 
-module.exports = { creerServiceComptes, estPremium };
+module.exports = { creerServiceComptes, estPremium, jourParis };

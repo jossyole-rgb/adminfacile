@@ -36,7 +36,7 @@ function creerFauxServices(surcharges = {}) {
     }
   );
 
-  const quota = { utilisees: 0, limite: 3, premium: false, liberations: 0 };
+  const quota = { utilisees: 0, limite: 3, premium: false, liberations: 0, messages: 0, limiteMessages: 5, liberationsMessages: 0 };
 
   const comptes = {
     async reserverGeneration() {
@@ -49,6 +49,17 @@ function creerFauxServices(surcharges = {}) {
     async libererGeneration() {
       quota.utilisees -= 1;
       quota.liberations += 1;
+    },
+    async reserverMessage() {
+      if (!quota.premium && quota.messages >= quota.limiteMessages) {
+        return { autorise: false, premium: false, utilises: quota.messages, limite: quota.limiteMessages };
+      }
+      quota.messages += 1;
+      return { autorise: true, premium: quota.premium, utilises: quota.messages, limite: quota.limiteMessages };
+    },
+    async libererMessage() {
+      quota.messages -= 1;
+      quota.liberationsMessages += 1;
     },
     async lireEtatCompte(uid) {
       return { premium: quota.premium, lettersUsed: quota.utilisees, freeLimit: quota.limite, uidLu: uid };
