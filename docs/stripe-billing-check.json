@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-10-15T17:21:47.445Z",
+  "checkout": true,
+  "live": true,
+  "amount": 999,
+  "currency": "eur",
+  "interval": "month",
+  "portal": true,
+  "payment": false,
+  "returnUrl": "https://adminfacile-app.netlify.app/app.html#billing"
+}

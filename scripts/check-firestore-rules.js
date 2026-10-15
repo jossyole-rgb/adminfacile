@@ -1,6 +1,7 @@
 require("dotenv").config();
 const fs = require("node:fs");
-const { createFirebase } = require("../backend/firebase");
+const { JWT } = require("google-auth-library");
+const { firebaseCredentials } = require("../backend/config");
 const cases = [
   {
     name: "profil gratuit autorisé",
@@ -92,10 +93,14 @@ const cases = [
   },
 ];
 (async () => {
-  const services = createFirebase(process.env, "rules-validation");
+  const credentials = firebaseCredentials(process.env);
+  const client = new JWT({
+    email: credentials.clientEmail,
+    key: credentials.privateKey,
+    scopes: ["https://www.googleapis.com/auth/firebase"],
+  });
   try {
-    const token = (await services.app.options.credential.getAccessToken())
-      .access_token;
+    const token = (await client.authorize()).access_token;
     const project = process.env.FIREBASE_PROJECT_ID;
     const response = await fetch(
       "https://firebaserules.googleapis.com/v1/projects/" + project + ":test",
@@ -147,7 +152,7 @@ const cases = [
     )
       process.exitCode = 1;
   } finally {
-    await services.close();
+    // Aucun service persistant ouvert.
   }
 })().catch((e) => {
   console.error("Validation impossible : " + (e.code || "connexion"));

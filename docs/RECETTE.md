@@ -36,17 +36,17 @@ Le quota gratuit correspond à 3 générations au total, comme dans l’applicat
 
 Les requêtes IA sont limitées en longueur et ne sont pas rejouées automatiquement. La génération réservée puis interrompue brutalement doit être rapprochée avant un lancement commercial ; une file durable et un journal de tentatives restent recommandés pour cette phase.
 
-Le mode démo n’est jamais un mode de production. Les résultats fictifs sont signalés en permanence. Aucun déploiement, migration de données, modification des règles hébergées ni paiement n’a été effectué pendant la livraison.
+Le mode démo n’est jamais un mode de production. Les résultats fictifs sont signalés en permanence. Aucune migration de données, modification des règles hébergées ni paiement n’a été effectué pendant la livraison. Le déploiement est détaillé ci-dessous.
 
 ## Raccordement des services réels
 
 - OpenAI : clé existante vérifiée par lecture du modèle `gpt-4o-mini`. Un appel de génération minimal, sans donnée personnelle, est utilisé pour vérifier l’inférence.
-- Stripe : compte accessible et deux tarifs mensuels EUR à 9,99 € présents en mode production. À la demande de l’utilisateur, le tarif du produit « AdminFacile Premium » (sans le suffixe TEST) a été sélectionné et le mode live renseigné. Aucun paiement ni webhook distant n’a été créé. Le secret de signature manque toujours. L’application exige `STRIPE_MODE`, un tarif, le secret webhook et `STRIPE_CHECKOUT_ENABLED=true` avant de proposer Checkout.
+- Stripe : compte accessible et deux tarifs mensuels EUR à 9,99 € présents en mode production. À la demande de l’utilisateur, le tarif du produit « AdminFacile Premium » (sans le suffixe TEST) a été sélectionné et le mode live renseigné. Aucun paiement ni webhook distant n’a été créé. Un nouveau secret de signature est raccordé à Render et conservé localement dans les fichiers privés ; la réception signée réelle est vérifiée. L’application exige `STRIPE_MODE`, un tarif, le secret webhook et `STRIPE_CHECKOUT_ENABLED=true` avant de proposer Checkout.
 - Firebase : configuration publique web renseignée à partir du fichier historique. Compte de service serveur raccordé depuis `.secrets/firebase-service-account.json`, ignoré par Git, permissions 600. Authentication et Firestore vérifiés en lecture avec succès.
 
 Diagnostic réexécutable sans affichage de secrets : `npm run services:check -- --network`. Celui-ci effectue uniquement des lectures sur les services configurés. Un état EN ATTENTE/MANQUANT donne un code de sortie 1 pour ne pas laisser croire que la configuration est complète.
 
-- Le serveur Render historique répond 404 sur `/api/health` : la nouvelle API n’y est pas encore déployée. Les webhooks Stripe existants pointent sur `/stripe-webhook` ; cette URL est désormais un alias de `/webhook` dans le code local.
+- La nouvelle API est déployée sur Render ; `/api/health` répond 200 en mode live. Les webhooks Stripe existants pointent sur `/stripe-webhook` ; cette URL est désormais un alias de `/webhook` dans le code local.
 - Le portail client Stripe a été créé en production après autorisation explicite : factures, mise à jour du moyen de paiement et résiliation à échéance activées. Configuration relue auprès de Stripe puis raccordée via `STRIPE_PORTAL_CONFIGURATION_ID` dans le fichier privé `.env`. Aucun paiement, résiliation ni modification d’un abonnement client n’a été effectué.
 
 ## Recette réelle complémentaire
@@ -55,4 +55,18 @@ Diagnostic réexécutable sans affichage de secrets : `npm run services:check --
 
 Les droits Premium proviennent désormais de subscriptions, collection inaccessible aux clients directs. Les profils users falsifiés ne peuvent pas activer Premium ; la reprise historique vérifie une session Stripe Checkout achevée et son propriétaire. Firebase Admin 14.5 utilise les imports modulaires ; audit npm de production : zéro vulnérabilité.
 
-Les règles hébergées restent à publier : le simulateur REST a refusé l’accès (403). Le déploiement Render/Netlify et le contrôle des événements Stripe restent à terminer.
+Les règles Firestore hébergées sont publiées et vérifiées par 10 requêtes réelles côté client. Le simulateur REST reste refusé (403), mais la création/compilation et la publication des règles sont autorisées. Le déploiement Netlify reste à terminer.
+
+## Déploiement du 15 octobre 2026
+
+Render : commit `8185377d75e69c20f30321dc1a7d727900830558`, déploiement `dep-db8f6hks728c73970alg`, confirmé Live. Variables privées Firebase et Stripe importées avec autorisation explicite. `/api/config` confirme Firebase, OpenAI et Stripe live, facturation activée à 9,99 €/mois. Les 13 contrôles de `SMOKE_BASE_URL=https://adminfacile.onrender.com npm run test:live` ont réussi ; les deux comptes techniques et leurs données ont été nettoyés. Aucun paiement effectué.
+
+Netlify : le projet adminfacile-app est accessible par la recherche, mais son tableau de bord est suspendu pour impayé. Publication en attente de régularisation par le propriétaire. Le déploiement Render utilise un commit spécifique, Auto-Deploy est désactivé. La PR #1 reste en brouillon, main n’a pas été fusionnée.
+
+## Finalisation Firebase et Stripe
+
+- Firestore : règles compilées et publiées dans `projects/adminfacile/rulesets/74328528-ae35-44ec-bf10-eb7335f2783b`. Ancienne version sauvegardée dans `.secrets/firestore-release-backup.json`. Dix contrôles réels réussis (rapport `firebase-rules-check.json`), comptes techniques nettoyés. Storage n’est pas utilisé et ne dispose d’aucune release de règles hébergée ; les fichiers originaux ne sont pas conservés.
+- Stripe : webhook actif `we_1UQsKPGg20bixEhmvq5qJ7qC`, cinq événements d’abonnement/facturation. Les deux anciens endpoints sont désactivés, conservés pour retour arrière. Secret privé corrigé sur Render, déploiement `dep-db8gmtavcj2c73abi7ug` confirmé Live.
+- Livraison réelle Stripe `evt_1UQsLyGg20bixEhmUSOn1MEt` reçue et enregistrée ; rejeu idempotent et alias `/webhook` vérifiés, signature invalide refusée. L’événement de vérification porte uniquement sur une métadonnée temporaire du produit, restaurée ensuite.
+- Checkout live à 999 centimes EUR/mois et portail client vérifiés via un compte technique dédié. Session Checkout expirée sans paiement, client technique supprimé. Rapports `stripe-delivery-check.json` et `stripe-billing-check.json`. Un achat réel et la création d’un abonnement payant n’ont pas été effectués.
+- Les retours Checkout et portail utilisent le domaine Netlify existant ; leur publication attend la régularisation Netlify. Les 20 tests automatisés passent.
